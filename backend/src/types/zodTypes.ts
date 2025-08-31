@@ -1,0 +1,124 @@
+import * as z from "zod";
+
+export const createAdminSchema = z.object({
+  username: z.string().min(4),
+  password: z.string().min(6),
+  designation: z.string(),
+  schoolCode: z.string().min(3),
+});
+
+export const updateAdminSchema = z.object({
+  username: z.string().min(6),
+  designation: z.string(),
+  password: z.string().optional().nullable(),
+  schoolCode: z.string().min(3),
+});
+
+export const passwordChangeSchema = z.object({
+  oldPassword: z.string().min(6),
+  newPassword: z.string().min(6),
+});
+
+export const addressSchema = z.object({
+  street: z.string(),
+  city: z.string(),
+  state: z.string(),
+  country: z.string(),
+  zipCode: z.string(),
+});
+
+export const createSchoolSchema = z.object({
+  name: z.string(),
+  code: z.string().min(3).optional(),
+  affiliationNumber: z.string(),
+  board: z.enum(["CBSE", "ICSE", "STATE", "IB", "CAMBRIDGE"]),
+  medium: z.enum(["English", "Hindi", "Regional"]),
+  establishmentYear: z.string().min(4).max(4),
+  schoolType: z.enum(["Private", "Government", "Aided", "International"]),
+  contactPhone: z.string().min(10).max(10).optional().nullable(),
+  contactEmail: z.email().optional().nullable(),
+  website: z.string().optional().nullable(),
+  logoUrl: z.string().optional().nullable(),
+  address: addressSchema,
+});
+
+export const userSignupSchema = z.object({
+  password: z.string().min(6),
+  email: z.email(),
+  locationCode: z.string(),
+});
+
+export const userLoginSchema = z.object({
+  email: z.email(),
+  password: z.string().min(6),
+});
+
+export const loginAdminSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+  schoolCode: z.string(),
+});
+
+export const createTeacherSchema = z.object({
+  fullName: z.string(),
+  email: z.email(),
+  password: z.string().min(6),
+  phone: z.string().min(10).max(10),
+  designation: z.string(),
+  schoolCode: z.string().min(3),
+});
+
+export const updateTeacherSchema = z.object({
+  fullName: z.string(),
+  email: z.email().optional(),
+  password: z.string().min(6).optional(),
+  phone: z.string().min(10).max(10),
+  designation: z.string(),
+});
+
+export const createStudentSchema = z.object({
+  schoolCode: z.string().min(3),
+  name: z.string(),
+  dob: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date format",
+  }),
+  gender: z.enum(["Male", "Female", "Other"]),
+  address: z.string(),
+  email: z.string().email(),
+  password: z.string().min(6),
+  phone: z.string().min(10).max(10),
+  photo: z.string().url().optional(),
+  admissionNo: z.string(),
+  aadhar: z.string().length(12, { message: "Aadhar must be 12 digits" }),
+  category: z.string(),
+  roleId: z.string(),
+  classId: z.string(),
+  sectionId: z.string(),
+  status: z.enum(["ACTIVE", "INACTIVE", "LEFT", "TRANSFERRED"]).optional(),
+});
+
+export const loginTeacherSchema = z.object({
+  schoolCode: z.string().min(3),
+  email: z.email(),
+  password: z.string(),
+});
+
+export const createPermissionSchema = z.object({
+  module: z.string(),
+  can_create: z.boolean(),
+  can_delete: z.boolean(),
+  can_update: z.boolean(),
+  can_read: z.boolean(),
+  role: z.string(),
+  schoolCode: z.string().min(3),
+});
+
+export const createClassSchema = z.object({
+  name: z.string(),
+  standard: z.number(),
+  schoolCode: z.string().min(3),
+});
+
+export const createSectionSchema = z.object({
+  room_no: z.string(),
+});

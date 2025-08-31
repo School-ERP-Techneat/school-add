@@ -1,0 +1,86 @@
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+
+// Route imports
+import schoolRoutes from "./routes/school.routes";
+import adminRoutes from "./routes/admin.routes";
+import teacherRoutes from "./routes/teacher.routes";
+import permissionRoutes from "./routes/permission.routes";
+import studentModuleRoutes from "./routes/student.routes";
+import userRoutes from "./routes/user.routes";
+const app = express();
+
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded());
+app.use(morgan("dev"));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://school-up.netlify.app",
+      "https://erp-kappa-nine.vercel.app",
+    ], // or "*" for all origins
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    maxAge: 86400, // cache preflight for 24 hours (in seconds)
+  })
+);
+
+// Api Endpoint to Health Check Backend
+app.use("/api/health-status", (req, res) => {
+  res.send("Service is live");
+});
+
+// Using Routes
+app.use("/api/school", schoolRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/admin/:schoolCode", adminRoutes);
+app.use("/api/teacher/:schoolCode", teacherRoutes);
+app.use("/api/permission/:schoolCode", permissionRoutes);
+app.use("/api/student/:schoolCode", studentModuleRoutes);
+
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    let statusCode = err.status || 500;
+    let message = err.message || "Internal Server Error";
+    if (err instanceof PrismaClientKnownRequestError) {
+      switch (err.code) {
+        case "P2002":
+          // Unique constraint failed
+          message = `A record with this ${err.meta?.target} already exists.`;
+          statusCode = 400;
+          break;
+        case "P2003":
+          // Foreign key constraint failed
+          message = `Invalid reference: related record not found. (${err.meta?.constraint})`;
+          statusCode = 400;
+          break;
+        case "P2025":
+          // Record not found
+          message = `The record you tried to update/delete does not exist.`;
+          statusCode = 404;
+          break;
+        default:
+          message = "Database error occurred.";
+          statusCode = 500;
+      }
+    }
+    res.status(statusCode).json({
+      message: message,
+      error: process.env.NODE_ENV === "production" ? {} : err,
+    });
+  }
+);
+
+export default app;
