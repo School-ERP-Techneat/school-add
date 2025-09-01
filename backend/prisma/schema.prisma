@@ -106,6 +106,8 @@ model Student {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Batch     Batch?   @relation(fields: [batchId], references: [id])
+  batchId   String?
 }
 
 model Role {
@@ -148,6 +150,15 @@ model Permission {
   @@unique([roleId, module, schoolCode])
 }
 
+model Batch {
+  id        String   @id @default(cuid())
+  year      String // e.g., "2024-2025"
+  startDate DateTime
+  endDate   DateTime
+  classes  Class[]
+  students Student[]
+}
+
 model Class {
   id            String          @id @default(cuid())
   name          String
@@ -159,7 +170,10 @@ model Class {
   Exam          Exam[]
   ClassSchedule ClassSchedule[]
   Assignment    Assignment[]
+  batch         Batch          @relation(fields: [batchId], references: [id])
+  batchId       String
 }
+
 
 model Section {
   id             String          @id @default(cuid())
@@ -173,7 +187,9 @@ model Section {
   Exam           Exam[]
   ClassSchedule  ClassSchedule[]
   Assignment     Assignment[]
+  Attendance     Attendance[]
 }
+
 
 model Attendance {
   id     String           @id @default(cuid())
@@ -183,10 +199,16 @@ model Attendance {
   studentId String
   student   Student @relation(fields: [studentId], references: [id])
 
-  teacherId String
-  markedBy  Teacher @relation(fields: [teacherId], references: [id])
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id])
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher   Teacher? @relation(fields: [teacherId], references: [id])
+  teacherId String?
+
+  @@unique([studentId, date]) // prevent duplicate attendance for a student per day
 }
 
 model Exam {
@@ -267,6 +289,17 @@ model Fee {
   studentId String
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+}
+
+
+enum Standard {
+  First
+  Second
+  Third
+  Fourth
+  Fifth
+  Sixth
+
 }
 
 enum Gender {
