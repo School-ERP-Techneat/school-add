@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { verifyAuth } from "../middlewares/authMiddleware";
 import { validate } from "../middlewares/validator";
-import { createClassSchema } from "../types/zodTypes";
-import { createClass } from "../controllers/class.controller";
 import { hasPermission } from "../middlewares/hasPermission";
+import { createSectionSchema } from "../types/zodTypes";
+import { createSection } from "../controllers/section.controller";
 
 const router = Router();
 
@@ -17,8 +17,8 @@ router.use(verifyAuth);
 router.post(
   "/",
   hasPermission("class", "can_create"),
-  validate(createClassSchema),
-  createClass
+  validate(createSectionSchema),
+  createSection
 );
 
 

@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { getStudentRole } from "../utils/findRole";
 import { createAccessToken } from "../utils/jwtUtil";
+import { asyncHandler } from "../utils/asyncHandler";
+import { StudentStatus } from "@prisma/client";
 
 export const registerStudent = async (req: Request, res: Response) => {
   try {
@@ -22,7 +23,6 @@ export const registerStudent = async (req: Request, res: Response) => {
       category,
       classId,
       sectionId,
-      roleId,
     } = req.body;
 
     const existingStudent = await prisma.student.findUnique({
@@ -112,7 +112,7 @@ export const loginStudent = async (req: Request, res: Response) => {
       username: email,
     });
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", accessToken: token });
   } catch (error) {
     res.status(500).json({ message: "Error logging in student", error });
   }
@@ -189,3 +189,60 @@ export async function updateStudentDetails(req: Request, res: Response) {
     return res.status(500).json({ message: error.message || "Server error" });
   }
 }
+
+export const getAllActiveClassStudents = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { classId, sectionId } = req.body;
+
+    const students = await prisma.student.findMany({
+      where: {
+        classId: classId,
+        sectionId: sectionId,
+        status: "ACTIVE",
+      },
+    });
+
+    return res.status(200).json({
+      data: students,
+      success: true,
+      message: "Students Fetched successfully",
+    });
+  }
+);
+
+export const getAllInactiveClassStudents = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { classId, sectionId } = req.body;
+
+    const students = await prisma.student.findMany({
+      where: {
+        classId: classId,
+        sectionId: sectionId,
+        status: "INACTIVE",
+      },
+    });
+
+    return res.status(200).json({
+      data: students,
+      success: true,
+      message: "Inactive Students Fetched successfully",
+    });
+  }
+);
+
+export const updateStudentActiveStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { status, studentId } = req.body;
+
+    const student = await prisma.student.update({
+      where: { id: studentId },
+      data: { status: status as StudentStatus },
+    });
+
+    return res.status(200).json({
+      data: student,
+      success: true,
+      message: "Student status updated successfully",
+    });
+  }
+);
