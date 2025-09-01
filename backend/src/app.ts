@@ -19,12 +19,7 @@ app.use(express.urlencoded());
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "https://school-up.netlify.app",
-      "https://erp-kappa-nine.vercel.app",
-    ], // or "*" for all origins
+    origin: "*", // or "*" for all origins
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,

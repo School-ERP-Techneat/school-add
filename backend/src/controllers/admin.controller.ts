@@ -74,6 +74,9 @@ export const createAdmin = asyncHandler(
             },
           },
         },
+        select: {
+          
+        }
       });
       await seedAdminPermissions(schoolCode);
       res.status(200).json({
