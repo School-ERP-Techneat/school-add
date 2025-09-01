@@ -22,7 +22,10 @@ export const SchoolStoreProvider = ({
   const storeRef = useRef<SchoolStoreApi | null>(null);
   if (storeRef.current === null) {
     storeRef.current = createSchoolStore({
-      schoolCode: session?.user.schoolCode || "",
+     schoolCode: session && session.user && session.user.schoolCode
+  ? session.user.schoolCode
+  : "",
+
       schoolData: null,
       adminFormOpen: false,
       schoolFormOpen: false,

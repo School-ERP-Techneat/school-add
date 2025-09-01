@@ -1,312 +1,186 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
 import prisma from "../config/prisma";
 import { getAdminRole } from "../utils/findRole";
 import { seedPermission } from "../utils/seedPermissions";
-import { success } from "zod";
 
+// 🍪 Cookie options
 export const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict" as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 day
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
-const seedAdminPermissions = async (schoolCode: string) => {
+// 🔒 Utility to seed full admin permissions
+const seedAdminPermissions = async (schoolCode: string, roleId: string) => {
+  const modules = ["admin", "teacher", "student"];
+  await Promise.all(
+    modules.map((module) =>
+      seedPermission({
+        schoolCode,
+        module,
+        roleId,
+        can_create: true,
+        can_delete: true,
+        can_update: true,
+        can_read: true,
+      })
+    )
+  );
+};
+
+// 🔎 Utility to get admin by ID (reusable)
+const findAdminById = async (id: string, schoolCode?: string) => {
+  return prisma.admin.findUnique({
+    where: schoolCode
+      ? { id, schoolCode }
+      : { id },
+  });
+};
+
+// ✅ Create Admin
+export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const { username, password, designation, schoolCode } = req.body;
+
+  const school = await prisma.school.findUnique({ where: { code: schoolCode } });
+  if (!school) throw new Error("School not found");
+
   const adminRole = await getAdminRole();
-  await seedPermission({
-    schoolCode,
-    module: "admin",
-    roleId: adminRole!.id,
-    can_create: true,
-    can_delete: true,
-    can_update: true,
-    can_read: true,
+  if (!adminRole) throw new Error("Admin role missing");
+
+  const createdAdmin = await prisma.admin.create({
+    data: {
+      username,
+      designation,
+      password: await hashPassword(password),
+      school: { connect: { code: school.code } },
+      role: { connect: { id: adminRole.id } },
+    },
   });
-  await seedPermission({
-    schoolCode,
-    module: "teacher",
-    roleId: adminRole!.id,
-    can_create: true,
-    can_delete: true,
-    can_update: true,
-    can_read: true,
+
+  await seedAdminPermissions(schoolCode, adminRole.id);
+
+  res.status(201).json({
+    success: true,
+    message: "Admin created successfully",
+    data: createdAdmin,
   });
-  await seedPermission({
-    schoolCode,
-    module: "student",
-    roleId: adminRole!.id,
-    can_create: true,
-    can_delete: true,
-    can_update: true,
-    can_read: true,
+});
+
+// ✅ Login Admin
+export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const { username, password, schoolCode } = req.body;
+
+  const admin = await prisma.admin.findUnique({
+    where: { username_schoolCode: { username, schoolCode } },
   });
-};
+  if (!admin || !(await verifyPassword(password, admin.password)))
+    return res.status(401).json({ success: false, message: "Invalid credentials" });
 
-export const createAdmin = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { username, password, designation, schoolCode } = req.body;
-      const hashedPassword = await hashPassword(password);
-      const adminRole = await getAdminRole();
-      const school = await prisma.school.findUnique({
-        where: {
-          code: schoolCode,
-        },
-      });
-      if (!school) throw new Error("school not found");
+  const accessToken = createAccessToken({
+    id: admin.id,
+    username: admin.username,
+    roleId: admin.roleId,
+    schoolCode: admin.schoolCode,
+  });
 
-      const createdAdmin = await prisma.admin.create({
-        data: {
-          designation,
-          password: hashedPassword,
-          username,
-          school: {
-            connect: {
-              code: school.code,
-            },
-          },
-          role: {
-            connect: {
-              id: adminRole!.id,
-            },
-          },
-        },
-      });
-      await seedAdminPermissions(schoolCode);
-      res.status(200).json({
-        message: "Admin Created Successfully",
-        data: createdAdmin,
-        success: true,
-      });
-    } catch (error) {
-      console.log("An error occurred at createAdmin: ", error);
-      next(error);
-    }
-  }
-);
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .json({ success: true, message: "Sign in successful" });
+});
 
-export const loginAdmin = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { username, password, schoolCode } = req.body;
+// ✅ Update Own Profile
+export const updateAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const { username, designation } = req.body;
+  const adminId = req.user?.id;
 
-      const admin = await prisma.admin.findUnique({
-        where: {
-          username_schoolCode: {
-            username,
-            schoolCode,
-          },
-        },
-      });
+  const updatedAdmin = await prisma.admin.update({
+    where: { id: adminId },
+    data: { username, designation },
+  });
 
-      if (!admin)
-        return res.status(401).json({ message: "Invalid Credentials" });
+  res.status(200).json({
+    success: true,
+    message: "Admin updated successfully",
+    data: updatedAdmin,
+  });
+});
 
-      const passwordMatch = await verifyPassword(
-        password,
-        admin.password as string
-      );
-      if (!passwordMatch) {
-        return res.status(401).json({ message: "Invalid Credentials" });
-      }
+// ✅ Change Password
+export const changeAdminPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { oldPassword, newPassword } = req.body;
+  const adminId = req.user?.id;
 
-      const accessToken = createAccessToken({
-        id: admin.id as string,
-        username: admin.username as string,
-        roleId: admin.roleId as string,
-        schoolCode: admin.schoolCode as string,
-      });
+  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
+  if (!admin || !(await verifyPassword(oldPassword, admin.password)))
+    return res.status(401).json({ success: false, message: "Invalid old password" });
 
-      return res
-        .status(200)
-        .cookie("accessToken", accessToken, cookieOptions)
-        .json({ message: "Sign in successful" });
-    } catch (error) {
-      console.log("Error inside the loginAdmin controller", error);
-      next(error);
-    }
-  }
-);
+  await prisma.admin.update({
+    where: { id: adminId },
+    data: { password: await hashPassword(newPassword) },
+  });
 
-export const updateAdmin = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { username, designation } = req.body;
-      const adminId = req.user?.id;
+  res.status(200).json({ success: true, message: "Password changed successfully" });
+});
 
-      const updatedAdmin = await prisma.admin.update({
-        where: {
-          id: adminId,
-        },
-        data: {
-          username,
-          designation,
-        },
-      });
+// ✅ Approve Teacher (optional)
+export const approveTeacher = asyncHandler(async (req: Request, res: Response) => {
+  const { teacherId } = req.params;
+  const teacher = await prisma.teacher.update({
+    where: { id: teacherId },
+    data: { status: "ACTIVE" },
+  });
+  res.status(200).json({ success: true, message: "Teacher approved successfully", data: teacher });
+});
 
-      if (!updatedAdmin)
-        return res.status(404).json({ message: "Admin not found" });
+// ✅ Get Admins by School
+export const getAdminsBySchoolCode = asyncHandler(async (req: Request, res: Response) => {
+  const { schoolCode } = req.params;
+  const admins = await prisma.admin.findMany({
+    where: { schoolCode },
+    select: { id: true, username: true, designation: true, createdAt: true, updatedAt: true },
+  });
 
-      return res
-        .status(200)
-        .json({ message: "Admin updated successfully", data: updatedAdmin });
-    } catch (error) {
-      console.log("Error inside the updateAdmin controller", error);
-      next(error);
-    }
-  }
-);
+  res.status(200).json({
+    success: true,
+    message: `Admins for school ${schoolCode} fetched successfully`,
+    data: admins,
+  });
+});
 
-export const changeAdminPassword = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { oldPassword, newPassword } = req.body;
+// ✅ Delete Admin
+export const deleteAdminById = asyncHandler(async (req: Request, res: Response) => {
+  await prisma.admin.delete({ where: { id: req.params.adminId } });
+  res.status(200).json({ success: true, message: "Admin deleted successfully" });
+});
 
-      const adminId = req.user?.id;
+// ✅ Update Admin by ID
+export const updateAdminById = asyncHandler(async (req: Request, res: Response) => {
+  const { adminId } = req.params;
+  const { username, designation, password } = req.body;
 
-      const admin = await prisma.admin.findUnique({
-        where: {
-          id: adminId,
-        },
-        select: {
-          id: true,
-          password: true,
-        },
-      });
+  const updatedAdmin = await prisma.admin.update({
+    where: { id: adminId },
+    data: {
+      username,
+      designation,
+      password: password ? await hashPassword(password) : undefined,
+    },
+  });
 
-      if (!admin)
-        return res.status(401).json({ message: "UNAUTHORIZED REQUEST" });
+  res.status(200).json({ success: true, message: "Admin updated successfully", data: updatedAdmin });
+});
 
-      const passwordMatch = await verifyPassword(oldPassword, admin?.password);
-      if (!passwordMatch)
-        return res.status(401).json({ message: "Invalid old password" });
+// ✅ Get Admin by ID
+export const getAdminById = asyncHandler(async (req: Request, res: Response) => {
+  const { adminId, schoolCode } = req.params;
 
-      const hashedNewPassword = await hashPassword(newPassword);
-      await prisma.admin.update({
-        where: {
-          id: adminId,
-        },
-        data: {
-          password: hashedNewPassword,
-        },
-      });
-      return res.status(200).json({ message: "Password changed successfully" });
-    } catch (error) {
-      console.log("Error inside the changeAdminPassword controller", error);
-      next(error);
-    }
-  }
-);
-// ** Admin approves teacher to Register (NOT IN USE)**
-export const approveTeacher = async (req: Request, res: Response) => {
-  try {
-    const { teacherId } = req.params;
+  const admin = await findAdminById(adminId, schoolCode);
+  if (!admin) return res.status(404).json({ success: false, message: "Admin not found" });
 
-    const teacher = await prisma.teacher.update({
-      where: { id: teacherId },
-      data: { status: "ACTIVE" },
-    });
-
-    res.json({ message: "Teacher approved successfully", teacher });
-  } catch (error) {
-    res.status(500).json({ message: "Error approving teacher", error });
-  }
-};
-
-export const getAdminsBySchoolCode = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { schoolCode } = req.params;
-
-      const admins = await prisma.admin.findMany({
-        where: {
-          schoolCode: schoolCode,
-        },
-        select: {
-          id: true,
-          username: true,
-          designation: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
-      res.status(200).json({
-        success: true,
-        message: `Admins for school ${schoolCode} fetched successfully`,
-        data: admins,
-      });
-    } catch (error) {
-      console.log("Error fetching admins by schoolCode:", error);
-      next(error);
-    }
-  }
-);
-
-export const deleteAdminById = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { adminId } = req.params;
-
-    await prisma.admin.delete({
-      where: {
-        id: adminId,
-      },
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "admin deleted successfully",
-    });
-  }
-);
-
-export const updateAdminById = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { adminId } = req.params;
-
-    const { username, designation, password } = req.body;
-
-    let hashedNewPassword = "";
-    if (password) {
-      hashedNewPassword = await hashPassword(password);
-    }
-    await prisma.admin.update({
-      where: {
-        id: adminId,
-      },
-      data: {
-        username,
-        designation,
-        password: hashedNewPassword ? hashedNewPassword : undefined,
-      },
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "admin updated successfully",
-    });
-  }
-);
-
-export const getAdminById = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { adminId, schoolCode } = req.params;
-
-    const admin = await prisma.admin.findUnique({
-      where: {
-        id: adminId,
-        schoolCode: schoolCode,
-      },
-    });
-
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
-    }
-
-    return res
-      .status(200)
-      .json({ success: true, message: "Admin details", data: admin });
-  }
-);
+  res.status(200).json({ success: true, message: "Admin details", data: admin });
+});
