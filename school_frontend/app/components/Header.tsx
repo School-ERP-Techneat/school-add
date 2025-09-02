@@ -1,167 +1,156 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { BiLogOut } from "react-icons/bi";
-import { useSchoolStore } from "@/store/StoreProvider";
-import { useFetchSchool } from "@/query/queries";
+'use client';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { logoutUser } from '@/utils/auth';
 
-interface HeaderProps {
-  variant?: "landing" | "auth" | "dashboard";
-  showNavigation?: boolean;
+interface User {
+  name: string;
+  email: string;
+  profileImageUrl?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({
-  variant = "landing",
-  showNavigation = true,
-}) => {
-  const session = useSession();
-  const schoolCode = session.data?.user.schoolCode || "";
-  const accessToken = session.data?.accessToken || "";
-
+const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [greeting, setGreeting] = useState("");
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [user, setUser] = useState<User | null>(null);
+
   const pathname = usePathname();
 
-  const { setSchoolCode, setSchoolData } = useSchoolStore((state) => state);
-
-  const { data: schoolData } = useFetchSchool({
-    accessToken,
-    schoolCode,
-  });
-
+  // Load theme + user on mount
   useEffect(() => {
-    if (schoolData) {
-      setSchoolData(schoolData);
+    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = storedTheme || (prefersDark ? "dark" : "light");
+    setTheme(initialTheme);
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+
+    // ✅ Load user from localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-  }, [schoolData]);
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    const greetings = [
-      { text: "Rise and shine", from: 5, to: 11 },
-      { text: "Good afternoon", from: 12, to: 17 },
-      { text: "Evening vibes", from: 18, to: 21 },
-      { text: "Time to unwind", from: 22, to: 4 },
-    ];
-    const current = greetings.find(
-      ({ from, to }) =>
-        (from <= hour && hour <= to) ||
-        (from > to && (hour >= from || hour <= to))
-    );
-    setGreeting(current?.text || "Hello");
   }, []);
 
+  // Apply theme changes
   useEffect(() => {
-    if (session && session.data) setSchoolCode(session.data?.user.schoolCode);
-  }, [session]);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-  const logoText =
-    variant === "dashboard"
-      ? "Academics Hub"
-      : variant === "auth"
-      ? "ConnectHub"
-      : "SchoolConnect";
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
 
   const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/resources", label: "Resources" },
-    { href: "/contact", label: "Contact" },
+    { href: '/', label: 'Home' },
+    { href: '/resources', label: 'Resources' },
+    { href: '/contact', label: 'Contact' },
   ];
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo + Greeting */}
-        <Link
-          href="/"
-          className="flex items-center space-x-2 group"
-          aria-label="Homepage"
-        >
-          <img
+    <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center space-x-2">
+          <Image
             src="https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-08-02/DoQv9bAwKy.svg"
-            alt={`${logoText} Logo`}
-            className="h-8 w-8 group-hover:animate-pulse"
+            alt="SchoolConnect Logo"
+            width={36}
+            height={36}
           />
-          <div>
-            <span className="text-lg font-bold text-teal-700 group-hover:text-teal-800 transition">
-              {logoText}
-            </span>
-            <div className="text-xs text-gray-500">{greeting}, learner!</div>
-          </div>
+          <span className="text-lg font-bold text-teal-700 dark:text-white">SchoolConnect</span>
         </Link>
 
-        {/* Hamburger */}
-        <button
-          className="sm:hidden text-teal-700 focus:outline-none"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle navigation menu"
-        >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-            />
-          </svg>
-        </button>
+        {/* Desktop Nav */}
+        <nav className="hidden sm:flex space-x-6">
+          {navLinks.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`transition ${
+                pathname === href
+                  ? 'text-teal-600 font-semibold underline underline-offset-4 dark:text-white'
+                  : 'text-gray-700 hover:text-teal-600 dark:text-gray-200'
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
 
-        {/* Navigation */}
-        {showNavigation && (
-          <nav
-            className={`flex-col sm:flex-row sm:flex items-center space-y-2 sm:space-y-0 sm:space-x-6 ${
-              menuOpen ? "flex" : "hidden"
-            } sm:flex`}
-            aria-label="Main navigation"
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <motion.button
+            onClick={toggleTheme}
+            whileTap={{ scale: 0.9 }}
+            className="p-2 rounded-full border shadow-md"
           >
-            {navLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`transition duration-200 ${
-                  pathname === href
-                    ? "text-teal-600 font-semibold underline underline-offset-4"
-                    : "text-gray-700 hover:text-teal-600"
-                } `}
-              >
-                {label}
-              </Link>
-            ))}
-            {!session.data && (
-              <Link
-                href="/login"
-                className={`transition duration-200 ${
-                  pathname === "/login"
-                    ? "text-teal-600 font-semibold underline underline-offset-4"
-                    : "text-gray-700 hover:text-teal-600"
-                } `}
-              >
-                Login
-              </Link>
-            )}
-            {session.data && (
+            {theme === 'dark' ? '🌙' : '☀️'}
+          </motion.button>
+
+          {/* If user logged in → show avatar, else → show login button */}
+          {user ? (
+            <div className="relative">
               <button
-                className="px-3 py-2 bg-gradient-to-r from-emerald-500 to-blue-300 text-white flex items-center gap-2  rounded-2xl transition duration-500 cursor-pointer hover:from-emerald-600 hover:to-blue-400 "
-                onClick={() =>
-                  signOut({
-                    redirect: true,
-                    redirectTo: "/login",
-                  })
-                }
+                onClick={() => setAvatarOpen(!avatarOpen)}
+                className="w-9 h-9 rounded-full overflow-hidden shadow"
               >
-                Logout
-                <BiLogOut size={20} />
+                <Image
+                  src={user.profileImageUrl || "/default-avatar.png"}
+                  alt="User Avatar"
+                  width={36}
+                  height={36}
+                  className="object-cover"
+                />
               </button>
-            )}
-          </nav>
-        )}
+              <AnimatePresence>
+                {avatarOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 text-sm"
+                  >
+                    <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="font-semibold">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    </div>
+                    <Link href="/profile" className="block px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logoutUser();
+                        localStorage.removeItem("user");
+                        setUser(null);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-red-50 dark:hover:bg-red-800 text-red-600"
+                    >
+                      Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-md bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-semibold shadow hover:opacity-90"
+            >
+              Login
+            </Link>
+          )}
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className="sm:hidden text-teal-700 dark:text-white ml-2"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            ☰
+          </button>
+        </div>
       </div>
     </header>
   );
