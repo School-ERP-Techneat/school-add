@@ -17,18 +17,18 @@ export default function RegisterAdmin() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  // Get schoolCode from cookie
+  // ✅ Get schoolCode from cookie
   useEffect(() => {
     const match = document.cookie.match(/userId=([^;]+)/);
     if (match) {
-      setFormData(prev => ({ ...prev, schoolCode: match[1] }));
+      setFormData((prev) => ({ ...prev, schoolCode: match[1] }));
     } else {
       toast.error('School ID not found. Please log in again.');
     }
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,26 +37,46 @@ export default function RegisterAdmin() {
     setResponse(null);
 
     try {
-      const res = await fetch(
-        'https://school-backend-2-don7.onrender.com/api/admin/register',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        }
-      );
-      console.log(formData);
+      // ✅ Get accessToken (from localStorage or cookie)
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        toast.error('Access token missing. Please login again.');
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Correct API endpoint with schoolCode
+      const url = `http://localhost:4000/api/admin/${formData.schoolCode}/register`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`, // ✅ include token
+        },
+        body: JSON.stringify(formData),
+      });
+
       const data = await res.json();
       setResponse(data);
 
       if (res.ok && data.success) {
         toast.success('🎉 Admin registered successfully!');
-        setFormData(prev => ({
+        setFormData((prev) => ({
           username: '',
           password: '',
           designation: '',
-          schoolCode: prev.schoolCode,
+          schoolCode: prev.schoolCode, // preserve schoolCode
         }));
+      } else if (data.error) {
+        // Handle validation errors array
+        if (Array.isArray(data.error)) {
+          data.error.forEach((err: any) => {
+            toast.error(err.message);
+          });
+        } else {
+          toast.error(data.message || 'Registration failed');
+        }
       } else {
         toast.error(data.message || 'Registration failed');
       }
@@ -70,7 +90,8 @@ export default function RegisterAdmin() {
 
   return (
     <div>
-        <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+
       {/* Cool animated gradient background with floating shapes */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-12 bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-900">
         {/* Floating Shapes */}
@@ -150,7 +171,7 @@ export default function RegisterAdmin() {
           )}
         </motion.div>
       </div>
-      
+
       <Footer />
     </div>
   );

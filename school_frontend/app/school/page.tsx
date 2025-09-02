@@ -110,7 +110,11 @@ const SchoolFormPage = () => {
         toast.success('🏫 School profile created successfully!');
         router.push('/dashboard');
       } else {
-        toast.error(result.message || 'Failed to create school');
+        if (result?.error && Array.isArray(result.error)) {
+          result.error.forEach((err: any) => toast.error(err.message));
+        } else {
+          toast.error(result.message || 'Failed to create school');
+        }
       }
     } catch (err) {
       console.error('School creation error:', err);
@@ -124,41 +128,197 @@ const SchoolFormPage = () => {
    *  Render form
    * ============================== */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-indigo-900 dark:to-black p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-indigo-900 dark:to-black p-6">
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      <div className="max-w-4xl mx-auto bg-white/80 dark:bg-gray-800/70 rounded-2xl shadow-2xl p-8 backdrop-blur-xl">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
+      <div className="max-w-5xl mx-auto bg-white/90 dark:bg-gray-800/80 rounded-2xl shadow-2xl p-10 backdrop-blur-md">
+        <h1 className="text-4xl font-bold mb-8 text-center text-gray-900 dark:text-white">
           🏫 Create School Profile
         </h1>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <input name="name" placeholder="School Name" value={formData.name} onChange={handleChange} className="input" required />
-          <input name="code" placeholder="School Code" value={formData.code} onChange={handleChange} className="input" disabled />
-          <input name="affiliationNumber" placeholder="Affiliation Number" value={formData.affiliationNumber} onChange={handleChange} className="input" />
-          <input name="board" placeholder="Board (e.g., CBSE)" value={formData.board} onChange={handleChange} className="input" />
-          <input name="medium" placeholder="Medium (e.g., English)" value={formData.medium} onChange={handleChange} className="input" />
-          <input type="number" name="establishmentYear" placeholder="Establishment Year" value={formData.establishmentYear} onChange={handleChange} className="input" />
-          <input name="schoolType" placeholder="School Type (Private/Govt)" value={formData.schoolType} onChange={handleChange} className="input" />
-          <input name="contactPhone" placeholder="Contact Phone" value={formData.contactPhone} onChange={handleChange} className="input" />
-          <input type="email" name="contactEmail" placeholder="Contact Email" value={formData.contactEmail} onChange={handleChange} className="input" />
-          <input name="website" placeholder="Website" value={formData.website} onChange={handleChange} className="input" />
-          <input name="logoUrl" placeholder="Logo URL" value={formData.logoUrl} onChange={handleChange} className="input" />
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+        >
+          {/* Basic Info */}
+          <div className="sm:col-span-2">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
+              School Information
+            </h2>
+            <hr className="mb-4 border-gray-300 dark:border-gray-600" />
+          </div>
+
+          <input
+            name="name"
+            placeholder="School Name"
+            value={formData.name}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
+            name="code"
+            placeholder="School Code"
+            value={formData.code}
+            onChange={handleChange}
+            className="input"
+            disabled
+          />
+          <input
+            name="affiliationNumber"
+            placeholder="Affiliation Number"
+            value={formData.affiliationNumber}
+            onChange={handleChange}
+            className="input"
+          />
+
+          {/* Dropdowns */}
+          <select
+            name="board"
+            value={formData.board}
+            onChange={handleChange}
+            className="input"
+            required
+          >
+            <option value="">Select Board</option>
+            <option value="CBSE">CBSE</option>
+            <option value="ICSE">ICSE</option>
+            <option value="STATE">STATE</option>
+            <option value="IB">IB</option>
+            <option value="CAMBRIDGE">CAMBRIDGE</option>
+          </select>
+
+          <select
+            name="medium"
+            value={formData.medium}
+            onChange={handleChange}
+            className="input"
+            required
+          >
+            <option value="">Select Medium</option>
+            <option value="English">English</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Regional">Regional</option>
+          </select>
+
+          <input
+            type="number"
+            name="establishmentYear"
+            placeholder="Establishment Year"
+            value={formData.establishmentYear}
+            onChange={handleChange}
+            className="input"
+          />
+
+          <select
+            name="schoolType"
+            value={formData.schoolType}
+            onChange={handleChange}
+            className="input"
+            required
+          >
+            <option value="">Select School Type</option>
+            <option value="Private">Private</option>
+            <option value="Government">Government</option>
+            <option value="Aided">Aided</option>
+            <option value="International">International</option>
+          </select>
+
+          {/* Contact */}
+          <div className="sm:col-span-2 mt-6">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
+              Contact Details
+            </h2>
+            <hr className="mb-4 border-gray-300 dark:border-gray-600" />
+          </div>
+
+          <input
+            name="contactPhone"
+            placeholder="Contact Phone"
+            value={formData.contactPhone}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            type="email"
+            name="contactEmail"
+            placeholder="Contact Email"
+            value={formData.contactEmail}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="website"
+            placeholder="Website"
+            value={formData.website}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="logoUrl"
+            placeholder="Logo URL"
+            value={formData.logoUrl}
+            onChange={handleChange}
+            className="input"
+          />
 
           {/* Address */}
-          <input name="address.street" placeholder="Street" value={formData.address.street} onChange={handleChange} className="input" />
-          <input name="address.area" placeholder="Area" value={formData.address.area} onChange={handleChange} className="input" />
-          <input name="address.city" placeholder="City" value={formData.address.city} onChange={handleChange} className="input" />
-          <input name="address.state" placeholder="State" value={formData.address.state} onChange={handleChange} className="input" />
-          <input name="address.country" placeholder="Country" value={formData.address.country} onChange={handleChange} className="input" />
-          <input name="address.zipCode" placeholder="Zip Code" value={formData.address.zipCode} onChange={handleChange} className="input" />
+          <div className="sm:col-span-2 mt-6">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
+              Address
+            </h2>
+            <hr className="mb-4 border-gray-300 dark:border-gray-600" />
+          </div>
+
+          <input
+            name="address.street"
+            placeholder="Street"
+            value={formData.address.street}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="address.area"
+            placeholder="Area"
+            value={formData.address.area}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="address.city"
+            placeholder="City"
+            value={formData.address.city}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="address.state"
+            placeholder="State"
+            value={formData.address.state}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="address.country"
+            placeholder="Country"
+            value={formData.address.country}
+            onChange={handleChange}
+            className="input"
+          />
+          <input
+            name="address.zipCode"
+            placeholder="Zip Code"
+            value={formData.address.zipCode}
+            onChange={handleChange}
+            className="input"
+          />
 
           <button
             type="submit"
             disabled={loading}
-            className="col-span-2 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg disabled:opacity-50"
+            className="col-span-2 mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg transition disabled:opacity-50"
           >
-            {loading ? 'Submitting...' : 'Create School'}
+            {loading ? 'Submitting...' : '✅ Create School'}
           </button>
         </form>
       </div>
