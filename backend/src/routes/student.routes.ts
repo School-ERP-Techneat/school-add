@@ -13,15 +13,15 @@ import { validateSchema } from "../middlewares/schemaValidator";
 import { createStudentSchema } from "../types/zodTypes";
 import { verifyAuth } from "../middlewares/authMiddleware";
 import { verifyAccess } from "../middlewares/verifyAccess";
-import {
-  getClassTeacher,
-  getAttendance,
-  getExamSyllabus,
-  getClassSchedules,
-  getAssignments,
-  getResults,
-  getFees,
-} from "../controllers/student.modules.controller";
+// import {
+//   getClassTeacher,
+//   getAttendance,
+//   getExamSyllabus,
+//   getClassSchedules,
+//   getAssignments,
+//   getResults,
+//   getFees,
+// } from "../controllers/student.modules.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -42,38 +42,38 @@ router.post(
   validateSchema(createStudentSchema),
   createStudent
 );
-// Data Routes
-router.get(
-  "/class-teacher",
-  verifyAccess(["student", "teacher", "admin"]),
-  getClassTeacher
-);
-router.get(
-  "/attendance",
-  verifyAccess(["student", "teacher", "admin"]),
-  getAttendance
-);
-router.get(
-  "/exams/syllabus",
-  verifyAccess(["admin", "student", "teacher"]),
-  getExamSyllabus
-);
-router.get(
-  "/class-schedules",
-  verifyAccess(["admin", "student", "teacher"]),
-  getClassSchedules
-);
-router.get(
-  "/assignments",
-  verifyAccess(["teacher", "student", "admin"]),
-  getAssignments
-);
-router.get(
-  "/results",
-  verifyAccess(["admin", "teacher", "student"]),
-  getResults
-);
-router.get("/fees", verifyAccess(["admin", "student", "teacher"]), getFees);
+// // Data Routes
+// router.get(
+//   "/class-teacher",
+//   verifyAccess(["student", "teacher", "admin"]),
+//   getClassTeacher
+// );
+// router.get(
+//   "/attendance",
+//   verifyAccess(["student", "teacher", "admin"]),
+//   getAttendance
+// );
+// router.get(
+//   "/exams/syllabus",
+//   verifyAccess(["admin", "student", "teacher"]),
+//   getExamSyllabus
+// );
+// router.get(
+//   "/class-schedules",
+//   verifyAccess(["admin", "student", "teacher"]),
+//   getClassSchedules
+// );
+// router.get(
+//   "/assignments",
+//   verifyAccess(["teacher", "student", "admin"]),
+//   getAssignments
+// );
+// router.get(
+//   "/results",
+//   verifyAccess(["admin", "teacher", "student"]),
+//   getResults
+// );
+// router.get("/fees", verifyAccess(["admin", "student", "teacher"]), getFees);
 router.get("/me", getStudentDetails);
 router.get(
   "/all/inactive/class-section/:sectionId",
