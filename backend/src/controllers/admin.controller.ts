@@ -3,8 +3,11 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
 import prisma from "../config/prisma";
+<<<<<<< Updated upstream
 import { getAdminRole } from "../utils/findRole";
 import { seedPermission } from "../utils/seedPermissions";
+=======
+>>>>>>> Stashed changes
 
 // 🍪 Cookie options
 export const cookieOptions = {
@@ -14,6 +17,7 @@ export const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
+<<<<<<< Updated upstream
 // 🔒 Utility to seed full admin permissions
 const seedAdminPermissions = async (schoolCode: string, roleId: string) => {
   const modules = ["admin", "teacher", "student"];
@@ -40,12 +44,30 @@ const findAdminById = async (id: string, schoolCode?: string) => {
       : { id },
   });
 };
+=======
+>>>>>>> Stashed changes
 export const createAdmin = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, password, designation, schoolCode } = req.body;
       const hashedPassword = await hashPassword(password);
-      const adminRole = await getAdminRole();
+
+      let adminRole = await prisma.role.findFirst({
+        where: {
+          name: "admin",
+          schoolCode,
+        },
+      });
+
+      if (!adminRole) {
+        adminRole = await prisma.role.create({
+          data: {
+            name: "admin",
+            schoolCode,
+          },
+        });
+      }
+
       const school = await prisma.school.findUnique({
         where: {
           code: schoolCode,
@@ -70,10 +92,13 @@ export const createAdmin = asyncHandler(
           },
         },
         select: {
-          
-        }
+          username: true,
+          designation: true,
+          schoolCode: true,
+          createdAt: true,
+          id: true,
+        },
       });
-      await seedAdminPermissions(schoolCode);
       res.status(200).json({
         message: "Admin Created Successfully",
         data: createdAdmin,
@@ -121,7 +146,7 @@ export const loginAdmin = asyncHandler(
       return res
         .status(200)
         .cookie("accessToken", accessToken, cookieOptions)
-        .json({ message: "Sign in successful" });
+        .json({ message: "Sign in successful", accessToken });
     } catch (error) {
       console.log("Error inside the loginAdmin controller", error);
       next(error);
@@ -180,6 +205,7 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
 
   await seedAdminPermissions(schoolCode, adminRole.id);
 
+<<<<<<< Updated upstream
   res.status(201).json({
     success: true,
     message: "Admin created successfully",
@@ -196,6 +222,24 @@ export const loginAdmin = asyncHandler(async (req: Request, res: Response) => {
   });
   if (!admin || !(await verifyPassword(password, admin.password)))
     return res.status(401).json({ success: false, message: "Invalid credentials" });
+=======
+      const hashedNewPassword = await hashPassword(newPassword);
+      await prisma.admin.update({
+        where: {
+          id: adminId,
+        },
+        data: {
+          password: hashedNewPassword,
+        },
+      });
+      return res.status(200).json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.log("Error inside the changeAdminPassword controller", error);
+      next(error);
+    }
+  }
+);
+>>>>>>> Stashed changes
 
   const accessToken = createAccessToken({
     id: admin.id,

@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { verifyAuth } from "../middlewares/authMiddleware";
 import { validateSchema } from "../middlewares/schemaValidator";
-import { createClassSchema } from "../types/zodTypes";
-import { createClass } from "../controllers/class.controller";
 import { verifyAccess } from "../middlewares/verifyAccess";
+import { createSectionSchema } from "../types/zodTypes";
+import { createSection } from "../controllers/section.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -17,8 +17,8 @@ router.use(verifyAuth);
 router.post(
   "/",
   verifyAccess(["admin"]),
-  validateSchema(createClassSchema),
-  createClass
+  validateSchema(createSectionSchema),
+  createSection
 );
 
 export default router;

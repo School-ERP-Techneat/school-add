@@ -1,14 +1,17 @@
 import { Router } from "express";
 import {
+  getAllActiveClassStudents,
+  getAllInactiveClassStudents,
   getStudentDetails,
   loginStudent,
   registerStudent,
+  updateStudentActiveStatus,
   updateStudentDetails,
 } from "../controllers/student.controller";
-import { validate } from "../middlewares/validator";
+import { validateSchema } from "../middlewares/schemaValidator";
 import { createStudentSchema } from "../types/zodTypes";
 import { verifyAuth } from "../middlewares/authMiddleware";
-import { hasPermission } from "../middlewares/hasPermission";
+import { verifyAccess } from "../middlewares/verifyAccess";
 import {
   getClassTeacher,
   getAttendance,
@@ -18,60 +21,65 @@ import {
   getResults,
   getFees,
 } from "../controllers/student.modules.controller";
-import { isStudentSelf } from "../middlewares/isStudentSelf";
 
 const router = Router({ mergeParams: true });
 
 router.use((req, res, next) => {
-  req.body.schoolCode = req.params.schoolCode;
+  if (req.body) req.body.schoolCode = req.params.schoolCode;
   next();
 });
 
 // Auth Routes
-router.post("/register", validate(createStudentSchema), registerStudent);
+router.post("/register", validateSchema(createStudentSchema), registerStudent);
 router.post("/login", loginStudent);
-
-router.use(verifyAuth);
 
 // Data Routes
 router.get(
   "/class-teacher",
-  hasPermission("class_teacher", "can_read"),
+  verifyAccess(["student", "teacher", "admin"]),
   getClassTeacher
 );
 router.get(
   "/attendance",
-  hasPermission("attendance", "can_read"),
+  verifyAccess(["student", "teacher", "admin"]),
   getAttendance
 );
 router.get(
   "/exams/syllabus",
-  hasPermission("exams_syllabus", "can_read"),
+  verifyAccess(["admin", "student", "teacher"]),
   getExamSyllabus
 );
 router.get(
   "/class-schedules",
-  hasPermission("class_schedules", "can_read"),
+  verifyAccess(["admin", "student", "teacher"]),
   getClassSchedules
 );
 router.get(
   "/assignments",
-  hasPermission("assignments", "can_read"),
+  verifyAccess(["teacher", "student", "admin"]),
   getAssignments
 );
-router.get("/results", hasPermission("results", "can_read"), getResults);
-router.get("/fees", hasPermission("fees", "can_read"), getFees);
 router.get(
-  "/me",
-  hasPermission("student_details", "can_read"),
-  getStudentDetails
+  "/results",
+  verifyAccess(["admin", "teacher", "student"]),
+  getResults
+);
+router.get("/fees", verifyAccess(["admin", "student", "teacher"]), getFees);
+router.get("/me", getStudentDetails);
+router.get(
+  "/all/inactive/class-section/:sectionId",
+  verifyAccess(["admin", "teacher"]),
+  getAllInactiveClassStudents
+);
+router.get(
+  "/all/active/class-section/:sectionId",
+  verifyAccess(["admin", "schoolOwner"]),
+  getAllActiveClassStudents
 );
 
-router.patch(
-  "/me",
-  hasPermission("student_details", "can_update"),
-  isStudentSelf,
-  updateStudentDetails
+router.put(
+  "/update-status/:studentId",
+  verifyAccess(["admin", "teacher"]),
+  updateStudentActiveStatus
 );
-
 export default router;

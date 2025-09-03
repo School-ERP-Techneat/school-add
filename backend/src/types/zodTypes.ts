@@ -1,3 +1,4 @@
+import { AttendanceStatus } from "@prisma/client";
 import * as z from "zod";
 
 export const createAdminSchema = z.object({
@@ -83,7 +84,7 @@ export const createStudentSchema = z.object({
     message: "Invalid date format",
   }),
   gender: z.enum(["Male", "Female", "Other"]),
-  address: z.string(),
+  address: addressSchema,
   email: z.string().email(),
   password: z.string().min(6),
   phone: z.string().min(10).max(10),
@@ -91,10 +92,8 @@ export const createStudentSchema = z.object({
   admissionNo: z.string(),
   aadhar: z.string().length(12, { message: "Aadhar must be 12 digits" }),
   category: z.string(),
-  roleId: z.string(),
   classId: z.string(),
   sectionId: z.string(),
-  status: z.enum(["ACTIVE", "INACTIVE", "LEFT", "TRANSFERRED"]).optional(),
 });
 
 export const loginTeacherSchema = z.object({
@@ -121,4 +120,25 @@ export const createClassSchema = z.object({
 
 export const createSectionSchema = z.object({
   room_no: z.string(),
+});
+
+export const createBatchSchema = z.object({
+  year: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  schoolCode: z.string().min(3),
+});
+
+export const roleSchema = z.object({
+  name: z.string(),
+  schoolCode: z.string(),
+});
+
+export const attendanceSchema = z.object({
+  attendanceData: z.array(
+    z.object({
+      studentId: z.string(),
+      status: z.nativeEnum(AttendanceStatus),
+    })
+  ),
 });

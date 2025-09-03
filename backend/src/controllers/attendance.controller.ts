@@ -5,36 +5,20 @@ import { AttendanceStatus } from "@prisma/client";
 
 export const createAttendance = asyncHandler(
   async (req: Request, res: Response) => {
-    const { sectionId, teacherId } = req.body;
+    const sectionId = req.params.sectionId;
+    const teacherId = req.user?.id;
 
-    // normalize date (avoid time issues)
     const attendanceDate = new Date();
     attendanceDate.setHours(0, 0, 0, 0);
-
-    // classId -> schoolId
-    // sectionId -> batchId
-    // batchId -> studentId
-    // attendanceId -> sectionId
-
-
-    const existing = await prisma.attendance.findFirst({
-      where: {
-        sectionId,
-        date: attendanceDate,
-      },
-    });
-
-    if (existing) {
-      return res.status(400).json({
-        message: "Attendance already generated for this section and date",
-      });
-    }
 
     const students = await prisma.student.findMany({
       where: {
         sectionId,
+        status: "ACTIVE",
       },
     });
+
+    console.log(students);
 
     if (students.length == 0) {
       return res.status(404).json({
@@ -51,7 +35,7 @@ export const createAttendance = asyncHandler(
       teacherId,
     }));
 
-    const createdAttendance = await prisma.attendance.createMany({
+    const createdAttendance = await prisma.attendance.createManyAndReturn({
       data: attendanceRecord,
       skipDuplicates: true,
     });
@@ -66,7 +50,9 @@ export const createAttendance = asyncHandler(
 
 export const markAttendance = asyncHandler(
   async (req: Request, res: Response) => {
-    const { sectionId, teacherId, attendanceData } = req.body;
+    const { sectionId } = req.params;
+    const teacherId = req.user!.id;
+    const { attendanceData } = req.body;
 
     const attendanceDate = new Date();
     attendanceDate.setHours(0, 0, 0, 0);
@@ -85,7 +71,7 @@ export const markAttendance = asyncHandler(
       return acc;
     }, []);
 
-    const presents = prisma.attendance.updateMany({
+    const presents = await prisma.attendance.updateMany({
       where: {
         sectionId,
         date: attendanceDate,
@@ -98,7 +84,7 @@ export const markAttendance = asyncHandler(
         status: AttendanceStatus.PRESENT,
       },
     });
-    const absents = prisma.attendance.updateMany({
+    const absents = await prisma.attendance.updateMany({
       where: {
         sectionId,
         date: attendanceDate,
@@ -152,19 +138,69 @@ export const markAttendanceById = asyncHandler(
 
 export const getAttendanceBySection = asyncHandler(
   async (req: Request, res: Response) => {
-    const { sectionId, date } = req.query;
+    const { sectionId } = req.params;
+    const { date } = req.query;
 
-    const attendanceDate = new Date(date as string);
+    let attendanceDate;
+
+    if (date) attendanceDate = new Date(date as string);
+    else attendanceDate = new Date();
+
     attendanceDate.setHours(0, 0, 0, 0);
 
     const records = await prisma.attendance.findMany({
       where: { sectionId: sectionId as string, date: attendanceDate },
-      include: { student: true }, // to show student details
+
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        studentId: true,
+        sectionId: true,
+        section: {
+          select: {
+            class: {
+              select: {
+                name: true,
+                standard: true,
+                batch: {
+                  select: {
+                    year: true,
+                    startDate: true,
+                    endDate: true,
+                  },
+                },
+              },
+            },
+            name: true,
+          },
+        },
+        student: {
+          select: {
+            name: true,
+            gender: true,
+            email: true,
+          },
+        },
+      },
     });
 
+    const attendanceData = records.map((record) => ({
+      id: record.id,
+      date: record.date,
+      status: record.status,
+      sectionId: record.sectionId,
+      class: record.section.class.name,
+      section: record.section.name,
+      batch: record.section.class.batch,
+      student: {
+        id: record.studentId,
+        ...record.student,
+      },
+    }));
     return res.status(200).json({
       success: true,
-      data: records,
+      data: attendanceData,
       message: "Attendance records retrieved successfully",
     });
   }
