@@ -149,6 +149,7 @@ export const updateAdmin = asyncHandler(
   }
 );
 
+// ✅ Change Password
 export const changeAdminPassword = asyncHandler(
   async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
@@ -171,19 +172,37 @@ export const changeAdminPassword = asyncHandler(
   }
 );
 
-// ✅ Approve Teacher (optional)
-export const approveTeacher = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { teacherId } = req.params;
-    const teacher = await prisma.teacher.update({
-      where: { id: teacherId },
-      data: { status: "ACTIVE" },
-    });
-    res.status(200).json({
-      success: true,
-      message: "Teacher approved successfully",
-      data: teacher,
-    });
+export const getAdminById = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { adminId, schoolCode } = req.params;
+      const admin = await prisma.admin.findUnique({
+        where: { id: adminId, schoolCode },
+        select: {
+          id: true,
+          username: true,
+          designation: true,
+          schoolCode: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      if (!admin) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Admin not found" });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Admin fetched successfully",
+        data: admin,
+      });
+    } catch (error) {
+      console.log("Error inside the getAdminById controller", error);
+      next(error);
+    }
   }
 );
 
@@ -235,21 +254,22 @@ export const updateAdminById = asyncHandler(
       },
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Admin updated successfully",
-      data: updatedAdmin,
-    });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Admin updated successfully",
+        data: updatedAdmin,
+      });
   }
 );
 
+// ✅ Get Admin by ID
 export const getAdminById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { adminId } = req.params;
+    const { adminId, schoolCode } = req.params;
 
-    const admin = await prisma.admin.findUnique({
-      where: { id: adminId },
-    });
+    const admin = await findAdminById(adminId, schoolCode);
     if (!admin)
       return res
         .status(404)

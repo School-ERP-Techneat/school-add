@@ -130,10 +130,7 @@ export const updateSchool = asyncHandler(
           website,
           logoUrl,
           address: {
-            upsert: {
-              create: address,
-              update: address,
-            },
+            update: address,
           },
         },
         include: { address: true },

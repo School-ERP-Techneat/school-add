@@ -5,8 +5,8 @@ import {
   getSchoolByCode,
   updateSchool,
 } from "../controllers/school.controller";
+import { createSchoolSchema } from "../types/zodTypes"; // <-- add separate schema for update
 import { validateSchema } from "../middlewares/schemaValidator.js";
-import { createSchoolSchema } from "../types/zodTypes.js";
 import { verifyAuth } from "../middlewares/authMiddleware";
 import { verifyAccess } from "../middlewares/verifyAccess";
 
