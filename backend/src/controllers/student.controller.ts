@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
-import { getStudentRole } from "../utils/findRole";
 import { createAccessToken } from "../utils/jwtUtil";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentStatus } from "@prisma/client";
@@ -9,7 +8,6 @@ import { StudentStatus } from "@prisma/client";
 export const registerStudent = async (req: Request, res: Response) => {
   try {
     const {
-      id,
       name,
       dob,
       gender,
@@ -28,6 +26,7 @@ export const registerStudent = async (req: Request, res: Response) => {
     const existingStudent = await prisma.student.findUnique({
       where: { email },
     });
+
     if (existingStudent) {
       return res
         .status(400)
@@ -35,23 +34,43 @@ export const registerStudent = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await hashPassword(password);
-    const studentRole = await getStudentRole();
+
+    let studentRole = await prisma.role.findUnique({
+      where: {
+        name: "student",
+        schoolCode,
+      },
+    });
+
+    if (!studentRole) {
+      studentRole = await prisma.role.create({
+        data: {
+          name: "student",
+          schoolCode,
+        },
+      });
+    }
 
     const student = await prisma.student.create({
       data: {
-        id,
         name,
         dob: new Date(dob),
         gender,
-        address,
+        address: {
+          create: {
+            city: address.city,
+            street: address.street,
+            state: address.state,
+            country: address.country,
+            zipCode: address.zipCode,
+          },
+        },
         password: hashedPassword,
         email,
         phone,
-        photo: null,
         admissionNo,
         aadhar,
         category,
-        schoolCode,
         school: {
           connect: {
             code: schoolCode,
@@ -192,11 +211,9 @@ export async function updateStudentDetails(req: Request, res: Response) {
 
 export const getAllActiveClassStudents = asyncHandler(
   async (req: Request, res: Response) => {
-    const { classId, sectionId } = req.body;
-
+    const { sectionId } = req.params;
     const students = await prisma.student.findMany({
       where: {
-        classId: classId,
         sectionId: sectionId,
         status: "ACTIVE",
       },
@@ -212,11 +229,10 @@ export const getAllActiveClassStudents = asyncHandler(
 
 export const getAllInactiveClassStudents = asyncHandler(
   async (req: Request, res: Response) => {
-    const { classId, sectionId } = req.body;
+    const { sectionId } = req.params;
 
     const students = await prisma.student.findMany({
       where: {
-        classId: classId,
         sectionId: sectionId,
         status: "INACTIVE",
       },
@@ -232,7 +248,8 @@ export const getAllInactiveClassStudents = asyncHandler(
 
 export const updateStudentActiveStatus = asyncHandler(
   async (req: Request, res: Response) => {
-    const { status, studentId } = req.body;
+    const { studentId } = req.params;
+    const { status } = req.body;
 
     const student = await prisma.student.update({
       where: { id: studentId },

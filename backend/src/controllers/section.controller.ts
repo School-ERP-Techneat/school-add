@@ -20,7 +20,7 @@ export const createSection = asyncHandler(
         ],
       },
     });
-
+    console.log(existingSection);
     if (existingSection)
       return res.status(400).json({
         message: "Section with this name or classTeacher already exists",

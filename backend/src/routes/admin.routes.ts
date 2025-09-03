@@ -7,10 +7,9 @@ import {
   changeAdminPassword,
   updateAdminById,
   deleteAdminById,
-  getAdminById
-
+  getAdminById,
 } from "../controllers/admin.controller";
-import { validate } from "../middlewares/validator";
+import { validateSchema } from "../middlewares/schemaValidator";
 import {
   createAdminSchema,
   loginAdminSchema,
@@ -18,61 +17,62 @@ import {
   updateAdminSchema,
 } from "../types/zodTypes";
 import { verifyAuth } from "../middlewares/authMiddleware";
-import { hasPermission } from "../middlewares/hasPermission";
+import { verifyAccess } from "../middlewares/verifyAccess";
 const router = Router({ mergeParams: true });
 
-router.use((req, res, next) => {
-  if (req.body) req.body.schoolCode = req.params.schoolCode;
+// ✅ Inject schoolCode into request body
+router.use((req, _res, next) => {
+  if (req.params.schoolCode && req.body) {
+    req.body.schoolCode = req.params.schoolCode;
+  }
   next();
 });
 
-router.post("/login", validate(loginAdminSchema), loginAdmin);
+router.post("/login", validateSchema(loginAdminSchema), loginAdmin);
 
+/**
+ * Protected routes (require auth + permissions)
+ */
 router.use(verifyAuth);
 
+// 🔹 Admin registration
 router.post(
   "/register",
-  hasPermission("admin", "can_create"),
-  validate(createAdminSchema),
+  verifyAccess(["schoolOwner"]),
+  validateSchema(createAdminSchema),
   createAdmin
 );
 
-router.get(
-  "/allAdmins",
-  hasPermission("admin", "can_read"),
-  getAdminsBySchoolCode
-);
+router.get("/allAdmins", verifyAccess(["schoolOwner"]), getAdminsBySchoolCode);
 
+// 🔹 Update logged-in admin account
 router.put(
   "/account",
-  hasPermission("admin", "can_update"),
-  validate(updateAdminSchema),
+  verifyAccess(["schoolOwner", "admin"]),
+  validateSchema(updateAdminSchema),
   updateAdmin
 );
+
+// 🔹 Change password (self)
 router.put(
   "/change-password",
-  hasPermission("admin", "can_update"),
-  validate(passwordChangeSchema),
+  validateSchema(passwordChangeSchema),
   changeAdminPassword
 );
 
 router.put(
   "/account/:adminId",
-  hasPermission("admin", "can_update"),
-  validate(updateAdminSchema),
+  verifyAccess(["schoolOwner"]),
+  validateSchema(updateAdminSchema),
   updateAdminById
 );
 
 router.delete(
   "/account/:adminId",
-  hasPermission("admin", "can_delete"),
+  verifyAccess(["schoolOwner"]),
   deleteAdminById
 );
 
-router.get(
-  "/account/:adminId",
-  hasPermission("admin", "can_read"),
-  getAdminById
-);
+router.get("/account/:adminId", verifyAccess(["schoolOwner"]), getAdminById);
 
 export default router;

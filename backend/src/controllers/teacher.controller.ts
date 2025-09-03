@@ -4,21 +4,7 @@ import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
 import { asyncHandler } from "../utils/asyncHandler";
 import { cookieOptions } from "./admin.controller";
-import { seedPermission } from "../utils/seedPermissions";
-import { getTeacherRole } from "../utils/findRole";
 
-async function seedTeacherPermissions(schoolCode: string) {
-  const teacherRole = await getTeacherRole();
-  await seedPermission({
-    schoolCode,
-    module: "teacher",
-    can_create: true,
-    can_delete: true,
-    can_update: true,
-    can_read: true,
-    roleId: teacherRole!.id,
-  });
-}
 export const registerTeacher = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -34,11 +20,22 @@ export const registerTeacher = asyncHandler(
           .json({ message: "Teacher with this email already exists" });
       }
 
-      const teacherRole = await prisma.role.findUnique({
+      let teacherRole = await prisma.role.findUnique({
         where: {
           name: "teacher",
+          schoolCode,
         },
       });
+
+      if (!teacherRole) {
+        teacherRole = await prisma.role.create({
+          data: {
+            name: "teacher",
+            schoolCode,
+          },
+        });
+      }
+
       const hashedPassword = await hashPassword(password);
 
       const teacher = await prisma.teacher.create({
@@ -61,7 +58,6 @@ export const registerTeacher = asyncHandler(
           status: "ACTIVE",
         },
       });
-      await seedTeacherPermissions(schoolCode);
 
       res.status(201).json({
         message: "Teacher registered successfully",
@@ -77,9 +73,11 @@ export const registerTeacher = asyncHandler(
 export const loginTeacher = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, schoolCode } = req.body;
 
-      const teacher = await prisma.teacher.findUnique({ where: { email } });
+      const teacher = await prisma.teacher.findUnique({
+        where: { email, schoolCode },
+      });
       if (!teacher) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
@@ -108,25 +106,6 @@ export const loginTeacher = asyncHandler(
         .json({ message: "Login successful", token });
     } catch (error) {
       console.log("Error Logging in Teacher: ", error);
-      next(error);
-    }
-  }
-);
-
-// ** Teacher will approve student Registeration **
-export const approveStudent = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { studentId } = req.params;
-
-      const student = await prisma.student.update({
-        where: { id: studentId },
-        data: { status: "ACTIVE" },
-      });
-
-      res.json({ message: "Student approved successfully", student });
-    } catch (error) {
-      console.log("Error Approving Student: ", error);
       next(error);
     }
   }

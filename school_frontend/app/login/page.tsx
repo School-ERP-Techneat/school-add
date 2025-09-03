@@ -1,335 +1,241 @@
-"use client";
+'use client';
+import { useState, useCallback, useEffect, startTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import Header from '@/components/Header';
+import AuthToggle from '@/components/AuthToggle';
+import AuthForm from '@/components/AuthForm';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
-import { useRegisterUser } from "@/query/mutations";
-import { useQueryClient } from "@tanstack/react-query";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import Header from "../components/Header";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-
-const signInSchema = z.object({
-  email: z.email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-const signUpSchema = z
-  .object({
-    email: z.email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-// Default fallback location code
-const DEFAULT_LOCATION_CODE = "GLOBAL1234";
+const API_BASE = 'http://localhost:4000/api';
 
 const LoginPage = () => {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [locationCode, setLocationCode] = useState(DEFAULT_LOCATION_CODE);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
-  const registerUser = useRegisterUser();
-
-  // Handle location fetching
-
-  // Forms
-  const signInForm = useForm<z.infer<typeof signInSchema>>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: "", password: "" },
+  const [signupData, setSignupData] = useState({
+    locationCode: '1234',
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
 
-  const signUpForm = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "" },
+  const [signinData, setSigninData] = useState({
+    email: '',
+    password: '',
   });
 
-  // Handlers
-  const handleSignIn = async (values: z.infer<typeof signInSchema>) => {
-    setError("");
-    setIsLoading(true);
-    const res = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
+  // Load theme preference
+  useEffect(() => {
+    const stored = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(stored);
+  }, []);
 
-    if (res?.error) {
-      setError(res.error || "Login failed");
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('darkMode', String(darkMode));
+  }, [darkMode]);
+
+  // 🔐 Redirect if already logged in
+  useEffect(() => {
+    const match = document.cookie.match(/userId=([^;]+)/);
+    if (match) {
+      router.push('/dashboard');
     } else {
-      toast.success("Login successful!");
-      router.replace("/dashboard");
+      setAuthChecked(true);
     }
-    setIsLoading(false);
-  };
+  }, [router]);
 
-  const handleSignUp = async (values: z.infer<typeof signUpSchema>) => {
-    setError("");
-    setIsLoading(true);
+  // Autofocus email
+  useEffect(() => {
+    const input = document.querySelector<HTMLInputElement>('input[name="email"]');
+    input?.focus();
+  }, [isSignUp]);
+
+  const handleSignupChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSignupData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
+  }, []);
+
+  const handleSigninChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSigninData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
+  }, []);
+
+  /** ==============================
+   *  🔐 SIGNUP
+   * ============================== */
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (signupData.password !== signupData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await registerUser.mutateAsync(
-        {
-          locationCode,
-          email: values.email,
-          password: values.password,
-        },
-        {
-          onSuccess: (data) => {
-            setIsSignUp(false);
-            toast.success("Signup successful!");
-          },
-          onError: () => {
-            setError("Signup failed. Try again.");
-          },
-        }
-      );
-    } catch {
-      setError("Network error. Please try again.");
+      const res = await fetch(`${API_BASE}/user/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locationCode: signupData.locationCode,
+          email: signupData.email,
+          password: signupData.password,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        toast.success('🚀 Account created successfully! Please log in.');
+        setIsSignUp(false);
+        setSignupData({ locationCode: '1234', email: '', password: '', confirmPassword: '' });
+      } else {
+        setError(result.message || 'Signup failed');
+        toast.error(result.message || 'Signup failed');
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  /** ==============================
+   *  🔑 SIGNIN
+   * ============================== */
+  const handleSigninSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_BASE}/user/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(signinData),
+      });
+
+      const result = await res.json();
+  console.log(result);
+      if (res.ok && result.data) {
+        const { user, accessToken } = result.data;
+        const schoolCode = user?.schoolCode;
+    
+        if (!schoolCode || !accessToken) {
+          throw new Error('Invalid login response: missing schoolCode or accessToken');
+        }
+
+        // Store token & schoolCode
+        localStorage.setItem('accessToken', accessToken);
+        document.cookie = `userId=${schoolCode}; path=/; secure`;
+
+        // Fetch school details with token
+        const schoolRes = await fetch(`${API_BASE}/school/${schoolCode}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const schoolData = await schoolRes.json();
+
+        if (schoolRes.ok && schoolData.data?.name?.trim()) {
+          toast.success('✨ Login successful!');
+          startTransition(() => router.push('/dashboard'));
+        } else {
+          toast('⚡ Please complete your school profile');
+          startTransition(() => router.push('/school'));
+        }
+      } else {
+        setError(result.message || 'Login failed');
+        toast.error(result.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Signin error:', err);
+      setError('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** ==============================
+   *  ⏳ LOADING STATE
+   * ============================== */
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500 animate-pulse">
+        🔐 Redirecting to dashboard...
+      </div>
+    );
+  }
+
+  /** ==============================
+   *  🎨 RENDER
+   * ============================== */
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col overflow-hidden">
-      <Header variant="auth" />
+    <div className="h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-indigo-900 dark:to-black flex flex-col overflow-hidden relative">
+      {/* Floating background orbs */}
+      <div className="absolute -top-20 -left-20 w-72 h-72 bg-purple-400/30 dark:bg-purple-600/30 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-300/30 dark:bg-blue-600/30 rounded-full blur-3xl animate-ping"></div>
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl h-full max-h-[calc(100vh-120px)]">
-          <div className="bg-white rounded-xl shadow-xl overflow-hidden h-full flex">
-            {/* Left Side - Form */}
-            <div className="w-full lg:w-1/2 p-4 sm:p-6 lg:p-8 flex flex-col justify-center overflow-y-auto">
-              <div className="max-w-sm mx-auto w-full">
-                {/* Toggle Buttons */}
-                <div className="flex mb-4 sm:mb-6 bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setIsSignUp(false)}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                      !isSignUp
-                        ? "bg-white text-teal-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-800"
-                    }`}
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => setIsSignUp(true)}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
-                      isSignUp
-                        ? "bg-white text-teal-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-800"
-                    }`}
-                  >
-                    Sign Up
-                  </button>
-                </div>
+      {/* Header with theme toggle */}
+      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-                {/* Form Title */}
-                <h1 className="text-2xl sm:text-3xl font-bold text-teal-600 mb-1 sm:mb-2">
-                  {isSignUp ? "Create Account" : "Welcome Back"}
-                </h1>
-                <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
-                  {isSignUp
-                    ? "Join ConnectHub and start your learning journey"
-                    : "Sign in to your ConnectHub account"}
-                </p>
-
-                {/* Error Message */}
-                {error && (
-                  <div className="mb-3 sm:mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-600 text-sm">{error}</p>
-                  </div>
-                )}
-
-                {/* Sign In Form */}
-                {isSignUp ? (
-                  <Form key="singUp" {...signUpForm}>
-                    <form
-                      onSubmit={signUpForm.handleSubmit(handleSignUp)}
-                      className="space-y-4"
-                    >
-                      <FormField
-                        control={signUpForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Enter your email"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signUpForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Enter your password"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={signUpForm.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Confirm your password"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Button
-                        disabled={isLoading}
-                        type="submit"
-                        className="bg-teal-500 hover:bg-teal-600 w-full"
-                      >
-                        {isLoading ? (
-                          <p className="flex items-center justify-center gap-2">
-                            Loading...{" "}
-                            <Loader2 className="animate-spin" size={5} />
-                          </p>
-                        ) : (
-                          "Sign Up"
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                ) : (
-                  <Form key="signIn" {...signInForm}>
-                    <form
-                      onSubmit={signInForm.handleSubmit(handleSignIn)}
-                      className="space-y-4"
-                    >
-                      <FormField
-                        control={signInForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Enter your email"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signInForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Enter your password"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Button
-                        disabled={isLoading}
-                        type="submit"
-                        className="bg-teal-500 hover:bg-teal-600 w-full"
-                      >
-                        {isLoading ? (
-                          <p className="flex items-center justify-center gap-2">
-                            Loading...{" "}
-                            <Loader2 className="animate-spin" size={5} />
-                          </p>
-                        ) : (
-                          "Sign In"
-                        )}
-                      </Button>
-                    </form>
-                  </Form>
-                )}
-              </div>
+      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-5xl h-full max-h-[calc(100vh-120px)]"
+        >
+          <div className="backdrop-blur-xl bg-white/60 dark:bg-gray-800/70 rounded-3xl shadow-2xl overflow-hidden h-full flex border border-white/20 dark:border-gray-700/30">
+            {/* Left: Auth Form */}
+            <div className="w-full lg:w-1/2 p-6 sm:p-10 flex flex-col justify-center overflow-y-auto">
+              <AuthToggle isSignUp={isSignUp} setIsSignUp={setIsSignUp} />
+              <AuthForm
+                isSignUp={isSignUp}
+                loading={loading}
+                error={error}
+                signinData={signinData}
+                signupData={signupData}
+                handleSigninChange={handleSigninChange}
+                handleSignupChange={handleSignupChange}
+                handleSigninSubmit={handleSigninSubmit}
+                handleSignupSubmit={handleSignupSubmit}
+              />
             </div>
 
-            {/* Right Side - Welcome Panel */}
-            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-500 to-teal-600 p-6 xl:p-12 flex-col justify-center items-center text-white">
-              <div className="text-center max-w-sm xl:max-w-md">
-                <h2 className="text-2xl xl:text-4xl font-bold mb-4 xl:mb-6">
-                  {isSignUp ? "Welcome to ConnectHub!" : "Hello, Friend!"}
+            {/* Right: Futuristic Welcome Panel */}
+            <div className="hidden lg:flex w-1/2 relative overflow-hidden items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-indigo-500 to-teal-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 opacity-80"></div>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="relative z-10 p-10 text-center text-white"
+              >
+                <h2 className="text-4xl font-extrabold tracking-wide drop-shadow-lg mb-4">
+                  {isSignUp ? '🚀 Join the Future of Learning' : '⚡ Welcome Back to ConnectHub'}
                 </h2>
-                <p className="text-teal-100 text-base xl:text-lg leading-relaxed mb-6 xl:mb-8">
+                <p className="text-lg opacity-90 leading-relaxed">
                   {isSignUp
-                    ? "Join our community of learners and educators. Start your journey with us today!"
-                    : "Enter your details and continue your learning journey with us."}
+                    ? 'Sign up today and be part of the most vibrant school network — where learning meets community.'
+                    : 'Log in to your dashboard and explore your school’s digital hub. Stay connected. Stay ahead.'}
                 </p>
-                <div className="w-16 h-16 xl:w-24 xl:h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-                  <svg
-                    className="w-8 h-8 xl:w-12 xl:h-12"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
+              </motion.div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -11,12 +11,11 @@ export async function verifyAuth(
     const accessToken =
       req.cookies?.accessToken ||
       req.headers["authorization"]?.replace("Bearer ", "");
-
+    
     if (!accessToken) {
       return res.status(401).json({ message: "unauthorized request" });
     }
     const decodedToken = verifyToken(accessToken);
-
     if (!decodedToken) return res.status(400).json("unauthorized request");
 
     req.user = decodedToken as AuthUser;

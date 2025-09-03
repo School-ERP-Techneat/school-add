@@ -9,8 +9,8 @@ import {
   updateTeacher,
 } from "../controllers/teacher.controller";
 import { verifyAuth } from "../middlewares/authMiddleware";
-import { hasPermission } from "../middlewares/hasPermission";
-import { validate } from "../middlewares/validator";
+import { verifyAccess } from "../middlewares/verifyAccess";
+import { validateSchema } from "../middlewares/schemaValidator";
 import {
   createTeacherSchema,
   loginTeacherSchema,
@@ -23,35 +23,27 @@ router.use((req, res, next) => {
   if (req.body) req.body.schoolCode = req.params.schoolCode;
   next();
 });
-router.post("/login", validate(loginTeacherSchema), loginTeacher);
+router.post("/login", validateSchema(loginTeacherSchema), loginTeacher);
 
 router.use(verifyAuth);
 
 router.post(
   "/register",
-  hasPermission("teacher", "can_create"),
-  validate(createTeacherSchema),
+  verifyAccess(["admin"]),
+  validateSchema(createTeacherSchema),
   registerTeacher
 );
 
-router.put("/me", validate(updateTeacherSchema), updateTeacher);
+router.put("/me", validateSchema(updateTeacherSchema), updateTeacher);
 
 router.put(
   "/teacherId/:teacherId",
-  hasPermission("teacher", "can_update"),
-  validate(updateTeacherSchema),
+  verifyAccess(["admin"]),
+  validateSchema(updateTeacherSchema),
   updateTeacher
 );
 router.get("/me", getTeacherProfile);
-router.get(
-  "/teacherId/:teacherId",
-  hasPermission("teacher", "can_read"),
-  getTeacherById
-);
-router.get("/all", hasPermission("teacher", "can_read"), getAllTeachers);
-router.delete(
-  "/teacherId/:teacherId",
-  hasPermission("teacher", "can_delete"),
-  deleteTeacher
-);
+router.get("/teacherId/:teacherId", verifyAccess(["admin"]), getTeacherById);
+router.get("/all", verifyAccess(["admin"]), getAllTeachers);
+router.delete("/teacherId/:teacherId", verifyAccess(["admin"]), deleteTeacher);
 export default router;

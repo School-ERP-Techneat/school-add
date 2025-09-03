@@ -1,6 +1,8 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { Sun, Moon } from "lucide-react";
 
 interface NewsItem {
   id: string;
@@ -48,56 +50,162 @@ const formatDate = (dateStr: string) =>
   });
 
 const NewsSection: React.FC = () => {
+  const [darkMode, setDarkMode] = useState(false);
+
   return (
-    <section className="bg-gradient-to-br from-gray-50 to-white py-16 px-4">
-      <div className="max-w-6xl mx-auto">
+    <section
+      className={`relative py-20 px-6 transition-colors duration-700 ${
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100"
+          : "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-12 text-center">
-          <h2 className="text-4xl font-extrabold text-teal-700">
-            📰 News & Announcements
+        <motion.header
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="mb-16 text-center relative"
+        >
+          {/* Toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="absolute right-0 top-0 p-3 rounded-full shadow-md transition-colors duration-500
+              bg-white/80 backdrop-blur-md hover:scale-110
+              dark:bg-gray-800"
+          >
+            {darkMode ? (
+              <Sun className="w-6 h-6 text-yellow-400" />
+            ) : (
+              <Moon className="w-6 h-6 text-gray-800" />
+            )}
+          </button>
+
+          <h2
+            className={`text-5xl font-extrabold drop-shadow-sm ${
+              darkMode
+                ? "bg-clip-text text-transparent bg-gradient-to-r from-teal-300 to-cyan-400"
+                : "bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-cyan-500"
+            }`}
+          >
+            📰 Latest News & Announcements
           </h2>
-          <p className="mt-2 text-gray-600 text-lg">
-            What’s happening at SchoolConnect — stay in the loop
+          <p
+            className={`mt-3 text-lg ${
+              darkMode ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
+            Stay updated with the latest happenings at{" "}
+            <span
+              className={`font-semibold ${
+                darkMode ? "text-teal-300" : "text-teal-600"
+              }`}
+            >
+              SchoolConnect
+            </span>
           </p>
-        </header>
+        </motion.header>
 
         {/* News Grid */}
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          variants={{
+            hidden: {},
+            show: {
+              transition: {
+                staggerChildren: 0.2,
+              },
+            },
+          }}
+          className="grid gap-12 md:grid-cols-2 lg:grid-cols-3"
+        >
           {newsItems.map(({ id, date, title, description, image }) => (
-            <Link
+            <motion.div
               key={id}
-              href="#"
-              className="group block bg-white rounded-xl shadow-md hover:shadow-xl transition duration-300 overflow-hidden"
+              variants={{
+                hidden: { opacity: 0, y: 50 },
+                show: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.7 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className={`group relative rounded-2xl shadow-md hover:shadow-2xl border overflow-hidden transition-all duration-300 ${
+                darkMode
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-100"
+              }`}
             >
-              <div className="relative">
-                <img
+              {/* Image */}
+              <div className="relative overflow-hidden">
+                <motion.img
                   src={image}
                   alt={title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ duration: 0.5 }}
+                  className="w-full h-56 object-cover"
                 />
+                {/* Gradient Overlay */}
+                <div
+                  className={`absolute inset-0 transition duration-500 ${
+                    darkMode
+                      ? "bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100"
+                      : "bg-gradient-to-t from-black/30 via-transparent opacity-0 group-hover:opacity-100"
+                  }`}
+                ></div>
               </div>
-              <div className="p-5 space-y-2">
-                <time className="block text-sm text-gray-500">
+
+              {/* Content */}
+              <div className="p-6">
+                <time
+                  className={`block text-sm ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
                   {formatDate(date)}
                 </time>
-                <h3 className="text-xl font-semibold text-teal-700 group-hover:underline">
+                <h3
+                  className={`mt-2 text-2xl font-bold transition ${
+                    darkMode
+                      ? "text-gray-100 group-hover:text-teal-300"
+                      : "text-gray-900 group-hover:text-teal-600"
+                  }`}
+                >
                   {title}
                 </h3>
-                <p className="text-sm text-gray-600">{description}</p>
+                <p
+                  className={`mt-2 leading-relaxed text-sm ${
+                    darkMode ? "text-gray-300" : "text-gray-600"
+                  }`}
+                >
+                  {description}
+                </p>
               </div>
-            </Link>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* CTA */}
-        <div className="mt-12 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="mt-16 text-center"
+        >
           <Link
             href="#"
-            className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-full transition duration-300"
+            className={`inline-block font-semibold py-4 px-10 rounded-full shadow-lg hover:shadow-xl transition-transform transform hover:scale-105 ${
+              darkMode
+                ? "bg-gradient-to-r from-teal-400 to-cyan-400 text-black"
+                : "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white animate-pulse"
+            }`}
           >
             Explore More News
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
