@@ -116,10 +116,14 @@ export const createClassSchema = z.object({
   name: z.string(),
   standard: z.number(),
   schoolCode: z.string().min(3),
+  batchId: z.string(),
 });
 
 export const createSectionSchema = z.object({
   room_no: z.string(),
+  name: z.string(),
+  classId: z.string(),
+  classTeacherId: z.string(),
 });
 
 export const createBatchSchema = z.object({

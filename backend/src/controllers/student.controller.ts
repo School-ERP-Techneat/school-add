@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
@@ -22,7 +21,6 @@ export const registerStudent = async (req: Request, res: Response) => {
       category,
       classId,
       sectionId,
-      roleId,
     } = req.body;
 
     const existingStudent = await prisma.student.findUnique({
@@ -133,7 +131,7 @@ export const loginStudent = async (req: Request, res: Response) => {
       username: email,
     });
 
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", accessToken: token });
   } catch (error) {
     res.status(500).json({ message: "Error logging in student", error });
   }
