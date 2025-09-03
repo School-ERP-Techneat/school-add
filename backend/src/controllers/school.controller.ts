@@ -3,40 +3,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
 import { Board, Medium, SchoolType } from "@prisma/client";
 
-<<<<<<< Updated upstream
-/* ----------------- Helpers ----------------- */
-const mapAddressData = (address: any) => ({
-  street: address.street,
-  city: address.city,
-  state: address.state,
-  country: address.country,
-  zipCode: address.zipCode,
-});
-
-const seedSuperUserPermissions = async (schoolCode: string) => {
-  const superUserRole = await getSuperuserRole();
-  if (!superUserRole) return;
-
-  const modules = ["admin", "school", "student"];
-  await Promise.all(
-    modules.map((module) =>
-      seedPermission({
-        schoolCode,
-        module,
-        roleId: superUserRole.id,
-        can_create: true,
-        can_delete: true,
-        can_update: true,
-        can_read: true,
-      })
-    )
-  );
-};
-
-/* ----------------- Controllers ----------------- */
-=======
-
->>>>>>> Stashed changes
 export const createSchool = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -68,14 +34,9 @@ export const createSchool = asyncHandler(
           contactEmail,
           website,
           logoUrl,
-          address: { create: mapAddressData(address) },
+          address: { create: address },
         },
       });
-<<<<<<< Updated upstream
-
-      await seedSuperUserPermissions(code);
-=======
->>>>>>> Stashed changes
 
       return res.status(201).json({
         success: true,
@@ -121,7 +82,9 @@ export const getSchoolByCode = asyncHandler(
 export const getAllSchools = asyncHandler(
   async (_: Request, res: Response, next: NextFunction) => {
     try {
-      const schools = await prisma.school.findMany({ include: { address: true } });
+      const schools = await prisma.school.findMany({
+        include: { address: true },
+      });
 
       return res.status(200).json({
         success: true,
@@ -167,10 +130,7 @@ export const updateSchool = asyncHandler(
           website,
           logoUrl,
           address: {
-            upsert: {
-              create: mapAddressData(address),
-              update: mapAddressData(address),
-            },
+            update: address,
           },
         },
         include: { address: true },
