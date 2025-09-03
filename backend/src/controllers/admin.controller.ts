@@ -32,7 +32,7 @@ const seedAdminPermissions = async (schoolCode: string, roleId: string) => {
   );
 };
 
-// 🔎 Utility to get admin by ID (reusable)
+
 const findAdminById = async (id: string, schoolCode?: string) => {
   return prisma.admin.findUnique({
     where: schoolCode
@@ -40,6 +40,123 @@ const findAdminById = async (id: string, schoolCode?: string) => {
       : { id },
   });
 };
+export const createAdmin = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { username, password, designation, schoolCode } = req.body;
+      const hashedPassword = await hashPassword(password);
+      const adminRole = await getAdminRole();
+      const school = await prisma.school.findUnique({
+        where: {
+          code: schoolCode,
+        },
+      });
+      if (!school) throw new Error("school not found");
+
+      const createdAdmin = await prisma.admin.create({
+        data: {
+          designation,
+          password: hashedPassword,
+          username,
+          school: {
+            connect: {
+              code: school.code,
+            },
+          },
+          role: {
+            connect: {
+              id: adminRole!.id,
+            },
+          },
+        },
+        select: {
+          
+        }
+      });
+      await seedAdminPermissions(schoolCode);
+      res.status(200).json({
+        message: "Admin Created Successfully",
+        data: createdAdmin,
+        success: true,
+      });
+    } catch (error) {
+      console.log("An error occurred at createAdmin: ", error);
+      next(error);
+    }
+  }
+);
+
+export const loginAdmin = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { username, password, schoolCode } = req.body;
+
+      const admin = await prisma.admin.findUnique({
+        where: {
+          username_schoolCode: {
+            username,
+            schoolCode,
+          },
+        },
+      });
+
+      if (!admin)
+        return res.status(401).json({ message: "Invalid Credentials" });
+
+      const passwordMatch = await verifyPassword(
+        password,
+        admin.password as string
+      );
+      if (!passwordMatch) {
+        return res.status(401).json({ message: "Invalid Credentials" });
+      }
+
+      const accessToken = createAccessToken({
+        id: admin.id as string,
+        username: admin.username as string,
+        roleId: admin.roleId as string,
+        schoolCode: admin.schoolCode as string,
+      });
+
+      return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .json({ message: "Sign in successful" });
+    } catch (error) {
+      console.log("Error inside the loginAdmin controller", error);
+      next(error);
+    }
+  }
+);
+
+export const updateAdmin = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { username, designation } = req.body;
+      const adminId = req.user?.id;
+
+      const updatedAdmin = await prisma.admin.update({
+        where: {
+          id: adminId,
+        },
+        data: {
+          username,
+          designation,
+        },
+      });
+
+      if (!updatedAdmin)
+        return res.status(404).json({ message: "Admin not found" });
+
+      return res
+        .status(200)
+        .json({ message: "Admin updated successfully", data: updatedAdmin });
+    } catch (error) {
+      console.log("Error inside the updateAdmin controller", error);
+      next(error);
+    }
+  }
+);
 
 // ✅ Create Admin
 export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
