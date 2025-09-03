@@ -103,13 +103,13 @@ model Student {
   fees        Fee[]
   submissions Submission[]
   address     Address?     @relation(fields: [addressId], references: [id])
-  addressId   String?       @unique
+  addressId   String?      @unique
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  School     School  @relation(fields: [schoolCode], references: [code])
+  School     School   @relation(fields: [schoolCode], references: [code])
   schoolCode String
-  Batch      Batch   @relation(fields: [batchId], references: [id])
+  Batch      Batch    @relation(fields: [batchId], references: [id])
   batchId    String
 }
 

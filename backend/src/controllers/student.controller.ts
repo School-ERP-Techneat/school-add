@@ -1,89 +1,93 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentStatus } from "@prisma/client";
-import { connect } from "http2";
 
-export const registerStudent = async (req: Request, res: Response) => {
-  try {
-    const {
-      name,
-      email,
-      password,
-      schoolCode,
-      admissionNo,
-      sectionId,
-      batchId,
-    } = req.body;
-
-    const existingStudent = await prisma.student.findUnique({
-      where: { email },
-    });
-
-    if (existingStudent) {
-      return res
-        .status(400)
-        .json({ message: "Student with this email already exists" });
-    }
-
-    const hashedPassword = await hashPassword(password);
-
-    let studentRole = await prisma.role.findUnique({
-      where: {
-        name: "student",
+export const registerStudent = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        name,
+        email,
+        password,
         schoolCode,
-      },
-    });
+        admissionNo,
+        sectionId,
+        batchId,
+      } = req.body;
 
-    if (!studentRole) {
-      studentRole = await prisma.role.create({
-        data: {
+      const existingStudent = await prisma.student.findUnique({
+        where: { email },
+      });
+
+      if (existingStudent) {
+        return res
+          .status(400)
+          .json({ message: "Student with this email already exists" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+
+      let studentRole = await prisma.role.findUnique({
+        where: {
           name: "student",
           schoolCode,
         },
       });
+
+      if (!studentRole) {
+        studentRole = await prisma.role.create({
+          data: {
+            name: "student",
+            schoolCode,
+          },
+        });
+      }
+
+      const student = await prisma.student.create({
+        data: {
+          name,
+          email,
+          admissionNo: admissionNo,
+          password: hashedPassword,
+          section: {
+            connect: {
+              id: sectionId,
+            },
+          },
+          role: {
+            connect: {
+              id: studentRole?.id,
+            },
+          },
+          status: StudentStatus.INACTIVE,
+          Batch: {
+            connect: {
+              id: batchId,
+            },
+          },
+          School: {
+            connect: {
+              code: schoolCode,
+            },
+          },
+        },
+      });
+
+      res.status(201).json({
+        message:
+          "Student registered successfully. Waiting for teacher approval.",
+        student,
+        success: false,
+      });
+    } catch (error) {
+      console.log({ message: "Error registering student", error });
+      next(error);
     }
-
-    const student = await prisma.student.create({
-      data: {
-        name,
-        email,
-        admissionNo,
-        password: hashedPassword,
-        section: {
-          connect: {
-            id: sectionId,
-          },
-        },
-        role: {
-          connect: {
-            id: studentRole?.id,
-          },
-        },
-        status: StudentStatus.INACTIVE,
-        Batch: {
-          connect: {
-            id: batchId,
-          },
-        },
-        School: {
-          connect: {
-            code: schoolCode,
-          },
-        },
-      },
-    });
-
-    res.status(201).json({
-      message: "Student registered successfully. Waiting for teacher approval.",
-      student,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error registering student", error });
   }
-};
+);
 
 export const loginStudent = async (req: Request, res: Response) => {
   try {

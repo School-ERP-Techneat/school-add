@@ -9,11 +9,12 @@ import schoolRoutes from "./routes/school.routes";
 import adminRoutes from "./routes/admin.routes";
 import teacherRoutes from "./routes/teacher.routes";
 import studentModuleRoutes from "./routes/student.routes";
-import userRoutes from "./routes/schoolOwner.routes";
+import schoolOwnerRoutes from "./routes/schoolOwner.routes";
 import classRoutes from "./routes/class.routes";
 import batchRoutes from "./routes/batch.routes";
 import sectionRoutes from "./routes/section.routes";
 import attendanceRoutes from "./routes/attendance.routes";
+
 const app = express();
 
 app.use(express.json());
@@ -37,7 +38,7 @@ app.use("/api/health-status", (req, res) => {
 
 // Using Routes
 app.use("/api/school", schoolRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/school-owner", schoolOwnerRoutes);
 app.use("/api/admin/:schoolCode", adminRoutes);
 app.use("/api/teacher/:schoolCode", teacherRoutes);
 app.use("/api/student/:schoolCode", studentModuleRoutes);

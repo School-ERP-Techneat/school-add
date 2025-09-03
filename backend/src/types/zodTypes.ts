@@ -84,6 +84,7 @@ export const createStudentSchema = z.object({
   photo: z.string().url().optional(),
   sectionId: z.string(),
   batchId: z.string(),
+  admissionNo: z.string(),
   schoolCode: z.string().min(3),
 });
 
