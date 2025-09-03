@@ -2,9 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
 import { Board, Medium, SchoolType } from "@prisma/client";
-import { seedPermission } from "../utils/seedPermissions";
-import { getSuperuserRole } from "../utils/findRole";
 
+<<<<<<< Updated upstream
 /* ----------------- Helpers ----------------- */
 const mapAddressData = (address: any) => ({
   street: address.street,
@@ -35,6 +34,9 @@ const seedSuperUserPermissions = async (schoolCode: string) => {
 };
 
 /* ----------------- Controllers ----------------- */
+=======
+
+>>>>>>> Stashed changes
 export const createSchool = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -69,8 +71,11 @@ export const createSchool = asyncHandler(
           address: { create: mapAddressData(address) },
         },
       });
+<<<<<<< Updated upstream
 
       await seedSuperUserPermissions(code);
+=======
+>>>>>>> Stashed changes
 
       return res.status(201).json({
         success: true,
