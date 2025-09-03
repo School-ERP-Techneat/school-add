@@ -27,9 +27,8 @@ model School {
   Admin     Admin[]
   Teacher   Teacher[]
   Class     Class[]
-  Student   Student[]
-  userId    String?
   Batch     Batch[]
+  Student   Student[]
 }
 
 model SchoolOwner {
@@ -81,38 +80,37 @@ model Teacher {
 }
 
 model Student {
-  id          String        @id @default(cuid())
-  name        String
-  dob         DateTime
-  gender      Gender
-  address     Address       @relation(fields: [addressId], references: [id])
+  id     String    @id @default(cuid())
+  name   String
+  dob    DateTime?
+  gender Gender?
+
   email       String        @unique
   password    String
-  phone       String
+  phone       String?
   photo       String?
   admissionNo String        @unique
-  aadhar      String        @unique
-  category    String
+  aadhar      String?       @unique
+  category    String?
   role        Role          @relation(fields: [roleId], references: [id])
   roleId      String
-  class       Class         @relation(fields: [classId], references: [id])
-  classId     String
   section     Section       @relation(fields: [sectionId], references: [id])
   sectionId   String
   status      StudentStatus @default(INACTIVE)
-  schoolCode  String
-  school      School        @relation(fields: [schoolCode], references: [code])
 
   attendance  Attendance[]
   results     Result[]
   fees        Fee[]
   submissions Submission[]
+  address     Address?     @relation(fields: [addressId], references: [id])
+  addressId   String?       @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  batch     Batch?   @relation(fields: [batchId], references: [id])
-  batchId   String?
-  addressId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  School     School  @relation(fields: [schoolCode], references: [code])
+  schoolCode String
+  Batch      Batch   @relation(fields: [batchId], references: [id])
+  batchId    String
 }
 
 model Role {
@@ -158,7 +156,6 @@ model Class {
   school        School          @relation(fields: [schoolCode], references: [code])
   schoolCode    String
   sections      Section[]
-  students      Student[]
   Exam          Exam[]
   ClassSchedule ClassSchedule[]
   Assignment    Assignment[]

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  createStudent,
   getAllActiveClassStudents,
   getAllInactiveClassStudents,
   getStudentDetails,
@@ -33,6 +34,14 @@ router.use((req, res, next) => {
 router.post("/register", validateSchema(createStudentSchema), registerStudent);
 router.post("/login", loginStudent);
 
+router.use(verifyAuth);
+
+router.post(
+  "/add",
+  verifyAccess(["admin"]),
+  validateSchema(createStudentSchema),
+  createStudent
+);
 // Data Routes
 router.get(
   "/class-teacher",
