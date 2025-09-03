@@ -1,10 +1,20 @@
 import { Router } from "express";
 import { createUser, loginUser } from "../controllers/user.controller";
-import { validate } from "../middlewares/validator.js";
-import { userLoginSchema, userSignupSchema } from "../types/zodTypes.js";
+import { validate } from "../middlewares/validator";
+import { userLoginSchema, userSignupSchema } from "../types/zodTypes";
+
 const router = Router();
 
-router.post("/signup", validate(userSignupSchema), createUser);
-router.post("/login", validate(userLoginSchema), loginUser);
+// 🔑 Auth Routes
+router
+  .route("/signup")
+  .post(validate(userSignupSchema), createUser);
+
+router
+  .route("/login")
+  .post(validate(userLoginSchema), loginUser);
+
+// 🛑 Optional: add logout for better UX
+// router.post("/logout", logoutUser);
 
 export default router;

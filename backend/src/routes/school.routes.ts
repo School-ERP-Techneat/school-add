@@ -5,16 +5,25 @@ import {
   getSchoolByCode,
   updateSchool,
 } from "../controllers/school.controller";
-import { validate } from "../middlewares/validator.js";
-
-import { createSchoolSchema } from "../types/zodTypes.js";
+import { validate } from "../middlewares/validator";
 import { verifyAuth } from "../middlewares/authMiddleware";
+import {
+  createSchoolSchema
+} from "../types/zodTypes"; // <-- add separate schema for update
+
 const router = Router();
+
+// 🔓 Public route
 router.get("/:schoolCode", getSchoolByCode);
 
+// 🔐 Protected routes
 router.use(verifyAuth);
-router.get("/all", getAllSchools);
-router.post("/", validate(createSchoolSchema), createSchool);
-router.put("/:schoolCode", validate(createSchoolSchema), updateSchool);
+
+router.route("/")
+  .get(getAllSchools) // GET /schools
+  .post(validate(createSchoolSchema), createSchool); // POST /schools
+
+router.route("/:schoolCode")
+  .put(validate(createSchoolSchema), updateSchool); // PUT /schools/:schoolCode
 
 export default router;

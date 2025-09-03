@@ -8,7 +8,7 @@ import NewsSection from '../components/NewsSection'
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
-      <Header variant="landing" />
+       <Header />
       <main>
         <HeroSection />
         <AboutSection />
