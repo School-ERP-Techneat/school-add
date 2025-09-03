@@ -254,29 +254,10 @@ export const updateAdminById = asyncHandler(
       },
     });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Admin updated successfully",
-        data: updatedAdmin,
-      });
-  }
-);
-
-// ✅ Get Admin by ID
-export const getAdminById = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { adminId, schoolCode } = req.params;
-
-    const admin = await findAdminById(adminId, schoolCode);
-    if (!admin)
-      return res
-        .status(404)
-        .json({ success: false, message: "Admin not found" });
-
-    res
-      .status(200)
-      .json({ success: true, message: "Admin details", data: admin });
+    res.status(200).json({
+      success: true,
+      message: "Admin updated successfully",
+      data: updatedAdmin,
+    });
   }
 );
