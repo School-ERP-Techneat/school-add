@@ -4,23 +4,18 @@ import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentStatus } from "@prisma/client";
+import { connect } from "http2";
 
 export const registerStudent = async (req: Request, res: Response) => {
   try {
     const {
       name,
-      dob,
-      gender,
-      address,
       email,
-      phone,
       password,
       schoolCode,
       admissionNo,
-      aadhar,
-      category,
-      classId,
       sectionId,
+      batchId,
     } = req.body;
 
     const existingStudent = await prisma.student.findUnique({
@@ -54,31 +49,12 @@ export const registerStudent = async (req: Request, res: Response) => {
     const student = await prisma.student.create({
       data: {
         name,
-        dob: new Date(dob),
-        gender,
-        address: {
-          create: {
-            city: address.city,
-            street: address.street,
-            state: address.state,
-            country: address.country,
-            zipCode: address.zipCode,
-          },
-        },
-        password: hashedPassword,
         email,
-        phone,
         admissionNo,
-        aadhar,
-        category,
-        school: {
+        password: hashedPassword,
+        section: {
           connect: {
-            code: schoolCode,
-          },
-        },
-        class: {
-          connect: {
-            id: classId,
+            id: sectionId,
           },
         },
         role: {
@@ -86,12 +62,17 @@ export const registerStudent = async (req: Request, res: Response) => {
             id: studentRole?.id,
           },
         },
-        section: {
+        status: StudentStatus.INACTIVE,
+        Batch: {
           connect: {
-            id: sectionId,
+            id: batchId,
           },
         },
-        status: "INACTIVE",
+        School: {
+          connect: {
+            code: schoolCode,
+          },
+        },
       },
     });
 
@@ -156,13 +137,11 @@ export async function getStudentDetails(req: Request, res: Response) {
         admissionNo: true,
         aadhar: true,
         category: true,
-        classId: true,
         sectionId: true,
         status: true,
         schoolCode: true,
         attendance: true,
-        school: true,
-        class: true,
+        School: true,
         section: true,
         fees: true,
         submissions: true,
@@ -260,6 +239,73 @@ export const updateStudentActiveStatus = asyncHandler(
       data: student,
       success: true,
       message: "Student status updated successfully",
+    });
+  }
+);
+
+export const createStudent = asyncHandler(
+  async (req: Request, res: Response) => {
+    const {
+      name,
+      email,
+      admissionNo,
+      sectionId,
+      batchId,
+      schoolCode,
+      password,
+    } = req.body;
+
+    let studentRole = await prisma.role.findUnique({
+      where: {
+        name: "student",
+        schoolCode,
+      },
+    });
+
+    if (!studentRole) {
+      studentRole = await prisma.role.create({
+        data: {
+          name: "student",
+          schoolCode,
+        },
+      });
+    }
+
+    const hashedPassword = await hashPassword(password);
+    const newStudent = await prisma.student.create({
+      data: {
+        name,
+        email,
+        admissionNo,
+        password: hashedPassword,
+        section: {
+          connect: {
+            id: sectionId,
+          },
+        },
+        role: {
+          connect: {
+            id: studentRole?.id,
+          },
+        },
+        status: StudentStatus.ACTIVE,
+        Batch: {
+          connect: {
+            id: batchId,
+          },
+        },
+        School: {
+          connect: {
+            code: schoolCode,
+          },
+        },
+      },
+    });
+
+    return res.status(201).json({
+      data: newStudent,
+      success: true,
+      message: "Student created successfully",
     });
   }
 );

@@ -78,22 +78,13 @@ export const updateTeacherSchema = z.object({
 });
 
 export const createStudentSchema = z.object({
-  schoolCode: z.string().min(3),
   name: z.string(),
-  dob: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: "Invalid date format",
-  }),
-  gender: z.enum(["Male", "Female", "Other"]),
-  address: addressSchema,
   email: z.string().email(),
   password: z.string().min(6),
-  phone: z.string().min(10).max(10),
   photo: z.string().url().optional(),
-  admissionNo: z.string(),
-  aadhar: z.string().length(12, { message: "Aadhar must be 12 digits" }),
-  category: z.string(),
-  classId: z.string(),
   sectionId: z.string(),
+  batchId: z.string(),
+  schoolCode: z.string().min(3),
 });
 
 export const loginTeacherSchema = z.object({
