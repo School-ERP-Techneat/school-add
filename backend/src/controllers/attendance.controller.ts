@@ -18,8 +18,6 @@ export const createAttendance = asyncHandler(
       },
     });
 
-    console.log(students);
-
     if (students.length == 0) {
       return res.status(404).json({
         success: false,
