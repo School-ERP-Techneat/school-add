@@ -22,7 +22,7 @@ app.use(express.urlencoded());
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: "*", // or "*" for all origins
+    origin: "http://localhost:3000", // or "*" for all origins
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,

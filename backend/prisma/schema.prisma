@@ -10,25 +10,24 @@ datasource db {
 model School {
   code              String     @id
   name              String
-  affiliationNumber String? // optional
+  affiliationNumber String?
   board             Board
   medium            Medium
-  establishmentYear String? // optional
+  establishmentYear String?
   schoolType        SchoolType
-  contactEmail      String? // optional
-  contactPhone      String? // optional
-  website           String? // optional
-  logoUrl           String? // optional
-  address           Address    @relation(fields: [addressId], references: [id])
+  contactEmail      String?
+  contactPhone      String?
+  website           String?
+  logoUrl           String?
   addressId         String
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Admin     Admin[]
-  Teacher   Teacher[]
-  Class     Class[]
-  Batch     Batch[]
-  Student   Student[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  Admin             Admin[]
+  Batch             Batch[]
+  Class             Class[]
+  address           Address    @relation(fields: [addressId], references: [id])
+  Student           Student[]
+  Teacher           Teacher[]
 }
 
 model SchoolOwner {
@@ -41,50 +40,45 @@ model SchoolOwner {
 }
 
 model Admin {
-  id          String @id @default(cuid())
+  id          String   @id @default(cuid())
   username    String
   password    String
   designation String
-  school      School @relation(fields: [schoolCode], references: [code])
   schoolCode  String
-  role        Role   @relation(fields: [roleId], references: [id])
   roleId      String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  role        Role     @relation(fields: [roleId], references: [id])
+  school      School   @relation(fields: [schoolCode], references: [code])
 
   @@unique([username, schoolCode])
 }
 
 model Teacher {
-  id          String        @id @default(cuid())
-  fullName    String
-  email       String        @unique
-  phone       String
-  password    String
-  designation String
-  status      TeacherStatus @default(INACTIVE)
-
-  roleId String?
-  role   Role?   @relation(fields: [roleId], references: [id])
-
-  school     School @relation(fields: [schoolCode], references: [code])
-  schoolCode String
-
+  id            String          @id @default(cuid())
+  fullName      String
+  email         String          @unique
+  phone         String
+  password      String
+  roleId        String?
+  schoolCode    String
+  designation   String
+  status        TeacherStatus   @default(INACTIVE)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  assignments   Assignment[]
   Attendance    Attendance[]
   classSchedule ClassSchedule[]
-  assignments   Assignment[]
   Section       Section?
+  role          Role?           @relation(fields: [roleId], references: [id])
+  school        School          @relation(fields: [schoolCode], references: [code])
 }
 
 model Student {
-  id     String    @id @default(cuid())
-  name   String
-  dob    DateTime?
-  gender Gender?
-
+  id          String        @id @default(cuid())
+  name        String
+  dob         DateTime?
+  gender      Gender?
   email       String        @unique
   password    String
   phone       String?
@@ -92,39 +86,36 @@ model Student {
   admissionNo String        @unique
   aadhar      String?       @unique
   category    String?
-  role        Role          @relation(fields: [roleId], references: [id])
   roleId      String
-  section     Section       @relation(fields: [sectionId], references: [id])
   sectionId   String
   status      StudentStatus @default(INACTIVE)
-
-  attendance  Attendance[]
-  results     Result[]
-  fees        Fee[]
-  submissions Submission[]
-  address     Address?     @relation(fields: [addressId], references: [id])
+  schoolCode  String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  batchId     String
   addressId   String?       @unique
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  School     School  @relation(fields: [schoolCode], references: [code])
-  schoolCode String
-  Batch      Batch   @relation(fields: [batchId], references: [id])
-  batchId    String
+  attendance  Attendance[]
+  fees        Fee[]
+  results     Result[]
+  address     Address?      @relation(fields: [addressId], references: [id])
+  Batch       Batch         @relation(fields: [batchId], references: [id])
+  role        Role          @relation(fields: [roleId], references: [id])
+  School      School        @relation(fields: [schoolCode], references: [code])
+  section     Section       @relation(fields: [sectionId], references: [id])
+  submissions Submission[]
 }
 
 model Role {
-  id          String   @id @default(cuid())
-  name        RoleName @unique
+  id          String        @id @default(cuid())
+  name        RoleName      @unique
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  admins      Admin[]
-  Teacher     Teacher[]
-  Student     Student[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   schoolCode  String
+  admins      Admin[]
   SchoolOwner SchoolOwner[]
+  Student     Student[]
+  Teacher     Teacher[]
 }
 
 model Address {
@@ -140,82 +131,78 @@ model Address {
 
 model Batch {
   id         String    @id @default(cuid())
-  year       String // e.g., "2024-2025"
+  year       String
   startDate  DateTime
   endDate    DateTime
-  classes    Class[]
-  students   Student[]
   schoolCode String
   school     School    @relation(fields: [schoolCode], references: [code])
+  classes    Class[]
+  students   Student[]
 }
 
 model Class {
   id            String          @id @default(cuid())
   name          String
   standard      Int
-  school        School          @relation(fields: [schoolCode], references: [code])
   schoolCode    String
-  sections      Section[]
-  Exam          Exam[]
-  ClassSchedule ClassSchedule[]
+  batchId       String
   Assignment    Assignment[]
   batch         Batch           @relation(fields: [batchId], references: [id])
-  batchId       String
+  school        School          @relation(fields: [schoolCode], references: [code])
+  ClassSchedule ClassSchedule[]
+  Exam          Exam[]
+  sections      Section[]
 }
 
 model Section {
   id             String          @id @default(cuid())
   name           String
   roomNo         String
-  classTeacher   Teacher         @relation(fields: [classTeacherId], references: [id])
   classTeacherId String          @unique
-  class          Class           @relation(fields: [classId], references: [id])
   classId        String
-  students       Student[]
-  Exam           Exam[]
-  ClassSchedule  ClassSchedule[]
   Assignment     Assignment[]
   Attendance     Attendance[]
+  ClassSchedule  ClassSchedule[]
+  Exam           Exam[]
+  class          Class           @relation(fields: [classId], references: [id])
+  classTeacher   Teacher         @relation(fields: [classTeacherId], references: [id])
+  students       Student[]
 }
 
 model Attendance {
-  id     String           @id @default(cuid())
-  date   DateTime
-  status AttendanceStatus
-
+  id        String           @id @default(cuid())
+  date      DateTime
+  status    AttendanceStatus
   studentId String
-  student   Student @relation(fields: [studentId], references: [id])
-
-  sectionId String
-  section   Section @relation(fields: [sectionId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  teacher   Teacher? @relation(fields: [teacherId], references: [id])
   teacherId String?
+  createdAt DateTime         @default(now())
+  sectionId String
+  updatedAt DateTime         @updatedAt
+  section   Section          @relation(fields: [sectionId], references: [id])
+  student   Student          @relation(fields: [studentId], references: [id])
+  teacher   Teacher?         @relation(fields: [teacherId], references: [id])
 
-  @@unique([studentId, date]) // prevent duplicate attendance for a student per day
+  @@unique([studentId, date])
 }
 
 model Exam {
   id        String     @id @default(cuid())
   title     String
   date      DateTime
-  syllabus  Syllabus[]
-  class     Class      @relation(fields: [classId], references: [id])
   classId   String
-  section   Section    @relation(fields: [sectionId], references: [id])
   sectionId String
+  class     Class      @relation(fields: [classId], references: [id])
+  section   Section    @relation(fields: [sectionId], references: [id])
   Result    Result[]
+  syllabus  Syllabus[]
 }
 
 model Syllabus {
   id      String @id @default(cuid())
   subject String
   details String
-  exam    Exam   @relation(fields: [examId], references: [id])
   examId  String
+  exam    Exam   @relation(fields: [examId], references: [id])
 }
 
 model ClassSchedule {
@@ -223,12 +210,12 @@ model ClassSchedule {
   day       ClassScheduleDay
   period    Int
   subject   String
-  teacher   Teacher          @relation(fields: [teacherId], references: [id])
   teacherId String
-  class     Class            @relation(fields: [classId], references: [id])
   classId   String
-  section   Section          @relation(fields: [sectionId], references: [id])
   sectionId String
+  class     Class            @relation(fields: [classId], references: [id])
+  section   Section          @relation(fields: [sectionId], references: [id])
+  teacher   Teacher          @relation(fields: [teacherId], references: [id])
 }
 
 model Assignment {
@@ -236,12 +223,12 @@ model Assignment {
   title       String
   details     String
   dueDate     DateTime
-  teacher     Teacher      @relation(fields: [teacherId], references: [id])
   teacherId   String
-  class       Class        @relation(fields: [classId], references: [id])
   classId     String
-  section     Section      @relation(fields: [sectionId], references: [id])
   sectionId   String
+  class       Class        @relation(fields: [classId], references: [id])
+  section     Section      @relation(fields: [sectionId], references: [id])
+  teacher     Teacher      @relation(fields: [teacherId], references: [id])
   submissions Submission[]
 }
 
@@ -249,10 +236,10 @@ model Submission {
   id           String     @id @default(cuid())
   fileUrl      String
   submittedAt  DateTime   @default(now())
-  student      Student    @relation(fields: [studentId], references: [id])
   studentId    String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
   assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  student      Student    @relation(fields: [studentId], references: [id])
 }
 
 model Result {
@@ -261,10 +248,10 @@ model Result {
   marks     Int
   total     Int
   grade     String
-  student   Student @relation(fields: [studentId], references: [id])
   studentId String
-  exam      Exam    @relation(fields: [examId], references: [id])
   examId    String
+  exam      Exam    @relation(fields: [examId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
 }
 
 model Fee {
@@ -272,10 +259,10 @@ model Fee {
   amount    Float
   dueDate   DateTime
   status    StudentFeeStatus
-  student   Student          @relation(fields: [studentId], references: [id])
   studentId String
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+  student   Student          @relation(fields: [studentId], references: [id])
 }
 
 enum Standard {
