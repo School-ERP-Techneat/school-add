@@ -25,7 +25,8 @@ app.use(
   cors({
     origin: [
       "https://marvel-his-violence-bow.trycloudflare.com", // Frontend 1
-      "https://chief-medical-leo-deadline.trycloudflare.com" // Frontend 2
+      "https://chief-medical-leo-deadline.trycloudflare.com",
+      "http://localhost:3000" // Frontend 2
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

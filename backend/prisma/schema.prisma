@@ -145,18 +145,23 @@ model Batch {
 }
 
 model Class {
-  id            String          @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
   standard      Int
   schoolCode    String
   batchId       String
   Assignment    Assignment[]
-  batch         Batch           @relation(fields: [batchId], references: [id])
-  school        School          @relation(fields: [schoolCode], references: [code])
+  batch         Batch    @relation(fields: [batchId], references: [id])
+  school        School   @relation(fields: [schoolCode], references: [code])
   ClassSchedule ClassSchedule[]
   Exam          Exam[]
   sections      Section[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
+
+
 
 model Section {
   id             String          @id @default(cuid())

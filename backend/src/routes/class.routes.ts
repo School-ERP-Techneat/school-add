@@ -2,7 +2,7 @@ import { Router } from "express";
 import { verifyAuth } from "../middlewares/authMiddleware";
 import { validateSchema } from "../middlewares/schemaValidator";
 import { createClassSchema } from "../types/zodTypes";
-import { createClass } from "../controllers/class.controller";
+import { createClass ,getAllClasses } from "../controllers/class.controller";
 import { verifyAccess } from "../middlewares/verifyAccess";
 
 const router = Router({ mergeParams: true });
@@ -20,5 +20,7 @@ router.post(
   validateSchema(createClassSchema),
   createClass
 );
+
+router.get("/", getAllClasses);
 
 export default router;
