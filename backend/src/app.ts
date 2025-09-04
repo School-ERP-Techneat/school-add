@@ -23,13 +23,17 @@ app.use(express.urlencoded());
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: "http://localhost:3000", // or "*" for all origins
+    origin: [
+      "https://marvel-his-violence-bow.trycloudflare.com", // Frontend 1
+      "https://chief-medical-leo-deadline.trycloudflare.com" // Frontend 2
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    maxAge: 86400, // cache preflight for 24 hours (in seconds)
+    credentials: true,  // Allow cookies, authorization headers
+    maxAge: 86400, // Optional: cache preflight request for 24 hours
   })
 );
+
 
 // Api Endpoint to Health Check Backend
 app.use("/api/health-status", (req, res) => {

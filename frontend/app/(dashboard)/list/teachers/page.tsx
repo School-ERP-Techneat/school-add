@@ -50,7 +50,7 @@ const TeacherRegisterPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com /api/teacher/${schoolCode}/register`,
+        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -86,7 +86,7 @@ const TeacherRegisterPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com /api/teacher/${schoolCode}/all`,
+        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/all`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -106,7 +106,7 @@ const TeacherRegisterPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com /api/teacher/${schoolCode}/teacherId/${teacherId}`,
+        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/teacherId/${teacherId}`,
         {
           method: "DELETE",
           credentials: "include",

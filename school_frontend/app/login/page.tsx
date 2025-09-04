@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import AuthToggle from '@/components/AuthToggle';
 import AuthForm from '@/components/AuthForm';
 
-const API_BASE = ' https://developed-ballet-projectors-shall.trycloudflare.com /api';
+const API_BASE = 'https://developed-ballet-projectors-shall.trycloudflare.com/api';
 
 const LoginPage = () => {
   const router = useRouter();
@@ -81,7 +81,7 @@ const LoginPage = () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/user/signup`, {
+      const res = await fetch(`${API_BASE}/school-owner/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +119,7 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE}/user/login`, {
+      const res = await fetch(`${API_BASE}/school-owner/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signinData),

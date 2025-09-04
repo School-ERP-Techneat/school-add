@@ -48,7 +48,7 @@ export const SchoolProvider = ({ children }: { children: React.ReactNode }) => {
 
     async function fetchSchool() {
       try {
-        const res = await fetch(` https://developed-ballet-projectors-shall.trycloudflare.com /api/school/${storedCode}`)
+        const res = await fetch(` https://developed-ballet-projectors-shall.trycloudflare.com/api/school/${storedCode}`)
         const result = await res.json()
         if (result.success) {
           setSchool(result.data)
