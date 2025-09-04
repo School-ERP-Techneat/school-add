@@ -37,11 +37,11 @@ const Login: React.FC = () => {
   const getLoginUrl = (role: string, schoolCode: string) => {
     switch (role) {
       case 'admin':
-        return ` https://developed-ballet-projectors-shall.trycloudflare.com/api/admin/${schoolCode}/login`;
+        return `https://developed-ballet-projectors-shall.trycloudflare.com/api/admin/${schoolCode}/login`;
       case 'student':
-        return ` https://developed-ballet-projectors-shall.trycloudflare.com/api/student/${schoolCode}/login`;
+        return `https://developed-ballet-projectors-shall.trycloudflare.com/api/student/${schoolCode}/login`;
       case 'teacher':
-        return ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/login`;
+        return `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/login`;
       default:
         return '';
     }
@@ -61,7 +61,7 @@ const Login: React.FC = () => {
       const response = await fetch(getLoginUrl(role, schoolCode), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // ✅ critical for cookie-based auth
+        credentials: 'include', // critical for cookie-based auth
         body: JSON.stringify(formData),
       });
 
@@ -72,7 +72,10 @@ const Login: React.FC = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // ✅ Do NOT save accessToken in localStorage (secure cookie only)
+      // Save accessToken in localStorage (not recommended for production)
+      localStorage.setItem('accessToken', data.accessToken);
+
+      // Save role and schoolCode
       localStorage.setItem('role', role);
       localStorage.setItem('schoolCode', schoolCode);
 

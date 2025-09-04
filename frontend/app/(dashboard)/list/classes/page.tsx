@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
-import { Plus, Trash2 } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import toast, { Toaster } from 'react-hot-toast';
+import { Plus, Trash2 } from 'lucide-react';
 
 type Teacher = {
   id: string;
@@ -16,20 +16,24 @@ type Teacher = {
 
 const TeacherRegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    phone: "",
-    designation: "",
+    fullName: '',
+    email: '',
+    password: '',
+    phone: '',
+    designation: '',
   });
 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
+  // ✅ Get accessToken from localStorage
+  const getAccessToken = () =>
+    typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
   // ✅ Get schoolCode from localStorage
   const getSchoolCode = () =>
-    typeof window !== "undefined" ? localStorage.getItem("schoolCode") : null;
+    typeof window !== 'undefined' ? localStorage.getItem('schoolCode') : null;
 
   // ✅ Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,39 +45,49 @@ const TeacherRegisterPage: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const accessToken = getAccessToken();
     const schoolCode = getSchoolCode();
+    
+    if (!accessToken) {
+      toast.error('You must be logged in.');
+      return;
+    }
+
     if (!schoolCode) {
-      toast.error("You must be logged in with a valid school.");
+      toast.error('You must be logged in with a valid school.');
       return;
     }
 
     setLoading(true);
     try {
       const response = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/register`,
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/register`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
           body: JSON.stringify(formData),
         }
       );
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Registration failed");
+      if (!response.ok) throw new Error(data.message || 'Registration failed');
 
-      toast.success("✅ Teacher registered successfully!");
+      toast.success('✅ Teacher registered successfully!');
       setFormData({
-        fullName: "",
-        email: "",
-        password: "",
-        phone: "",
-        designation: "",
+        fullName: '',
+        email: '',
+        password: '',
+        phone: '',
+        designation: '',
       });
       setShowForm(false); // close form
       fetchTeachers();
     } catch (error: any) {
-      toast.error(error.message || "Something went wrong.");
+      toast.error(error.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -81,16 +95,24 @@ const TeacherRegisterPage: React.FC = () => {
 
   // ✅ Fetch teachers
   const fetchTeachers = async () => {
+    const accessToken = getAccessToken();
     const schoolCode = getSchoolCode();
-    if (!schoolCode) return;
+    
+    if (!accessToken || !schoolCode) return;
 
     try {
       const res = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/all`,
-        { credentials: "include" }
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+        }
       );
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to fetch teachers");
+      console.log(data);
+      if (!res.ok) throw new Error(data.message || 'Failed to fetch teachers');
       setTeachers(data.teachers || []);
     } catch (error: any) {
       toast.error(error.message);
@@ -99,23 +121,28 @@ const TeacherRegisterPage: React.FC = () => {
 
   // ✅ Delete teacher
   const deleteTeacher = async (teacherId: string) => {
+    const accessToken = getAccessToken();
     const schoolCode = getSchoolCode();
-    if (!schoolCode) return;
 
-    if (!confirm("Are you sure you want to delete this teacher?")) return;
+    if (!accessToken || !schoolCode) return;
+
+    if (!confirm('Are you sure you want to delete this teacher?')) return;
 
     try {
       const res = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/teacherId/${teacherId}`,
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/teacherId/${teacherId}`,
         {
-          method: "DELETE",
-          credentials: "include",
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
         }
       );
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to delete teacher");
+      if (!res.ok) throw new Error(data.message || 'Failed to delete teacher');
 
-      toast.success("🗑️ Teacher deleted successfully!");
+      toast.success('🗑️ Teacher deleted successfully!');
       fetchTeachers();
     } catch (error: any) {
       toast.error(error.message);
@@ -150,7 +177,7 @@ const TeacherRegisterPage: React.FC = () => {
             className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-lg mx-4 sm:mx-0"
           >
             <h2 className="text-2xl font-bold text-indigo-600 mb-4 text-center">
-              👩‍🏫 Register classes
+              👩‍🏫 Register class
             </h2>
             <form onSubmit={handleRegister} className="grid gap-4">
               <input
@@ -211,7 +238,7 @@ const TeacherRegisterPage: React.FC = () => {
                   disabled={loading}
                   className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-md w-full sm:w-auto"
                 >
-                  {loading ? "Registering..." : "Register"}
+                  {loading ? 'Registering...' : 'Register'}
                 </button>
               </div>
             </form>
@@ -226,7 +253,7 @@ const TeacherRegisterPage: React.FC = () => {
         className="max-w-6xl mx-auto mt-10 bg-white shadow-lg rounded-2xl p-4 sm:p-6"
       >
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center sm:text-left">
-          📋 Registered classes
+          📋 Registered class
         </h2>
 
         {teachers.length > 0 ? (
@@ -250,10 +277,10 @@ const TeacherRegisterPage: React.FC = () => {
                     <td className="p-3">{t.phone}</td>
                     <td className="p-3">{t.designation}</td>
                     <td className="p-3">
-                      {new Date(t.createdAt).toLocaleDateString("en-IN", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
+                      {new Date(t.createdAt).toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
                       })}
                     </td>
                     <td className="p-3 text-center">
@@ -292,10 +319,10 @@ const TeacherRegisterPage: React.FC = () => {
                   <p className="text-sm text-gray-600">{t.designation}</p>
                   <p className="text-xs text-gray-500">
                     Joined:{" "}
-                    {new Date(t.createdAt).toLocaleDateString("en-IN", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
+                    {new Date(t.createdAt).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
                     })}
                   </p>
                 </div>
@@ -303,7 +330,7 @@ const TeacherRegisterPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <p className="text-gray-600 text-center">No classes found.</p>
+          <p className="text-gray-600 text-center">No teachers found.</p>
         )}
       </motion.div>
     </div>
