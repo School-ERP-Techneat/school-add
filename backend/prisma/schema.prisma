@@ -93,30 +93,33 @@ model Student {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   batchId     String
-  addressId   String?       @unique
-  attendance  Attendance[]
-  fees        Fee[]
-  results     Result[]
-  address     Address?      @relation(fields: [addressId], references: [id])
-  Batch       Batch         @relation(fields: [batchId], references: [id])
-  role        Role          @relation(fields: [roleId], references: [id])
-  School      School        @relation(fields: [schoolCode], references: [code])
-  section     Section       @relation(fields: [sectionId], references: [id])
-  submissions Submission[]
 
+  attendance  Attendance[]
+  results     Result[]
+  fees        Fee[]
+  submissions Submission[]
+  address     Address?     @relation(fields: [addressId], references: [id])
+  addressId   String?      @unique
+  Batch       Batch        @relation(fields: [batchId], references: [id])
+  role        Role         @relation(fields: [roleId], references: [id])
+  School      School       @relation(fields: [schoolCode], references: [code])
+  section     Section      @relation(fields: [sectionId], references: [id])
 }
 
 model Role {
-  id          String        @id @default(cuid())
-  name        RoleName      @unique
+  id          String   @id @default(cuid())
+  name        RoleName
   description String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  schoolCode  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   admins      Admin[]
-  SchoolOwner SchoolOwner[]
-  Student     Student[]
   Teacher     Teacher[]
+  Student     Student[]
+  schoolCode  String
+  SchoolOwner SchoolOwner[]
+
+  @@unique([name, schoolCode])
 }
 
 model Address {

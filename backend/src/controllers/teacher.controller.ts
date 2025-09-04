@@ -22,8 +22,10 @@ export const registerTeacher = asyncHandler(
 
       let teacherRole = await prisma.role.findUnique({
         where: {
-          name: "teacher",
-          schoolCode,
+          name_schoolCode: {
+            name: "teacher",
+            schoolCode,
+          },
         },
       });
 

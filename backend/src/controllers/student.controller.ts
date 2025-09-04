@@ -1,12 +1,13 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { createAccessToken } from "../utils/jwtUtil";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentStatus } from "@prisma/client";
+import { connect } from "http2";
 
 export const registerStudent = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response) => {
     try {
       const {
         name,
@@ -32,8 +33,10 @@ export const registerStudent = asyncHandler(
 
       let studentRole = await prisma.role.findUnique({
         where: {
-          name: "student",
-          schoolCode,
+          name_schoolCode: {
+            name: "student",
+            schoolCode,
+          },
         },
       });
 
@@ -45,12 +48,11 @@ export const registerStudent = asyncHandler(
           },
         });
       }
-
       const student = await prisma.student.create({
         data: {
           name,
           email,
-          admissionNo: admissionNo,
+          admissionNo,
           password: hashedPassword,
           section: {
             connect: {
@@ -80,11 +82,9 @@ export const registerStudent = asyncHandler(
         message:
           "Student registered successfully. Waiting for teacher approval.",
         student,
-        success: false,
       });
     } catch (error) {
-      console.log({ message: "Error registering student", error });
-      next(error);
+      res.status(500).json({ message: "Error registering student", error });
     }
   }
 );
@@ -261,8 +261,10 @@ export const createStudent = asyncHandler(
 
     let studentRole = await prisma.role.findUnique({
       where: {
-        name: "student",
-        schoolCode,
+        name_schoolCode: {
+          name: "student",
+          schoolCode,
+        },
       },
     });
 
