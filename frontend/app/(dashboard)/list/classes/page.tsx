@@ -1,173 +1,313 @@
 "use client";
 
-import { motion, easeOut } from "framer-motion"; 
-import Image from "next/image";
-import FormModal from "@/app/components/FormModal";
-import Pagination from "@/app/components/Pagination";
-import TableSearch from "@/app/components/TableSearch";
-import { role, classesData } from "@/lib/data";
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+import { Plus, Trash2 } from "lucide-react";
 
-type Class = {
-  id: number;
-  name: string;
-  capacity: number;
-  grade: number;
-  supervisor: string;
+type Teacher = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  designation: string;
+  createdAt: string;
 };
 
-const columns = [
-  { header: "Class name", accessor: "info" },
-  { header: "Capacity", accessor: "capacity", className: "hidden md:table-cell" },
-  { header: "Grade", accessor: "grade", className: "hidden md:table-cell" },
-  { header: "Supervisor", accessor: "supervisor", className: "hidden md:table-cell" },
-  { header: "Actions", accessor: "action" },
-];
+const TeacherRegisterPage: React.FC = () => {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    phone: "",
+    designation: "",
+  });
 
-// 🔁 Animation Variants
-const containerVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.6,
-      ease: easeOut,
-      staggerChildren: 0.1,
-    },
-  },
-};
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
-const rowVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0 },
-};
+  // ✅ Get schoolCode from localStorage
+  const getSchoolCode = () =>
+    typeof window !== "undefined" ? localStorage.getItem("schoolCode") : null;
 
-const gradeBadge = (grade: number) => (
-  <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-500 text-white font-semibold shadow-sm">
-    Grade {grade}
-  </span>
-);
+  // ✅ Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-const ClassListPage = () => {
-  const renderRow = (item: Class) => (
-    <motion.tr
-      key={item.id}
-      variants={rowVariants}
-      whileHover={{ scale: 1.01 }}
-      className="border-b border-gray-200 dark:border-gray-700 text-sm hover:bg-purple-50 dark:hover:bg-gray-800 transition"
-    >
-      <td className="p-4 text-gray-800 dark:text-gray-100 font-medium flex items-center gap-2">
-        {item.name}
-        {gradeBadge(item.grade)}
-      </td>
-      <td className="p-4 hidden md:table-cell text-gray-700 dark:text-gray-200">{item.capacity}</td>
-      <td className="p-4 hidden md:table-cell text-gray-700 dark:text-gray-200">{item.grade}</td>
-      <td className="p-4 hidden md:table-cell text-gray-700 dark:text-gray-200">{item.supervisor}</td>
-      <td className="p-4">
-        <div className="flex items-center gap-2">
-          {role === "admin" && (
-            <>
-              <FormModal table="class" type="update" data={item} />
-              <FormModal table="class" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
-      </td>
-    </motion.tr>
-  );
+  // ✅ Register teacher
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const schoolCode = getSchoolCode();
+    if (!schoolCode) {
+      toast.error("You must be logged in with a valid school.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/teacher/${schoolCode}/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Registration failed");
+
+      toast.success("✅ Teacher registered successfully!");
+      setFormData({
+        fullName: "",
+        email: "",
+        password: "",
+        phone: "",
+        designation: "",
+      });
+      setShowForm(false); // close form
+      fetchTeachers();
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Fetch teachers
+  const fetchTeachers = async () => {
+    const schoolCode = getSchoolCode();
+    if (!schoolCode) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/teacher/${schoolCode}/all`,
+        { credentials: "include" }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to fetch teachers");
+      setTeachers(data.teachers || []);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  // ✅ Delete teacher
+  const deleteTeacher = async (teacherId: string) => {
+    const schoolCode = getSchoolCode();
+    if (!schoolCode) return;
+
+    if (!confirm("Are you sure you want to delete this teacher?")) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/teacher/${schoolCode}/teacherId/${teacherId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to delete teacher");
+
+      toast.success("🗑️ Teacher deleted successfully!");
+      fetchTeachers();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{
-        duration: 0.5,
-        ease: [0.33, 1, 0.68, 1],
-        staggerChildren: 0.1,
-      }}
-      className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-xl flex-1 m-4 mt-0"
-    >
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="sticky top-0 z-30 bg-white dark:bg-gray-900 backdrop-blur-md shadow-md rounded-t-xl px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4"
-      >
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-          🏫 Class Management
-        </h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-yellow-400 transition shadow"
-            >
-              <Image src="/filter.png" alt="Filter" width={16} height={16} />
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-yellow-400 transition shadow"
-            >
-              <Image src="/sort.png" alt="Sort" width={16} height={16} />
-            </motion.button>
-            {role === "admin" && <FormModal table="class" type="create" />}
-          </div>
-        </div>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-4 sm:p-6 relative">
+      <Toaster position="top-right" />
 
-      {/* Table or Empty State */}
-      {classesData.length > 0 ? (
-        <div className="overflow-x-auto rounded-xl shadow-sm mt-4">
-          <table className="table-fixed w-full border-collapse">
-            <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wide">
-              <tr>
-                {columns.map((col) => (
-                  <th
-                    key={col.accessor}
-                    className={`p-4 text-left font-semibold ${col.className || ""}`}
-                  >
-                    {col.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-              {classesData.map(renderRow)}
-            </tbody>
-          </table>
+      {/* Floating + Button */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setShowForm(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg"
+      >
+        <Plus size={28} />
+      </motion.button>
+
+      {/* Modal Form */}
+      {showForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-lg mx-4 sm:mx-0"
+          >
+            <h2 className="text-2xl font-bold text-indigo-600 mb-4 text-center">
+              👩‍🏫 Register classes
+            </h2>
+            <form onSubmit={handleRegister} className="grid gap-4">
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                placeholder="Full Name"
+                required
+                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 w-full"
+              />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Email"
+                required
+                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 w-full"
+              />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Password"
+                required
+                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 w-full"
+              />
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="Phone"
+                required
+                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 w-full"
+              />
+              <input
+                type="text"
+                name="designation"
+                value={formData.designation}
+                onChange={handleInputChange}
+                placeholder="Designation"
+                required
+                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 w-full"
+              />
+              <div className="flex flex-col sm:flex-row justify-between gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-4 py-2 bg-gray-200 rounded-lg w-full sm:w-auto"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-md w-full sm:w-auto"
+                >
+                  {loading ? "Registering..." : "Register"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
         </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center py-12 text-gray-500 dark:text-gray-400"
-        >
-          <Image
-            src="/empty-state.svg"
-            alt="No data"
-            width={120}
-            height={120}
-            className="mx-auto mb-4"
-          />
-          <p className="text-lg font-medium">No classes found.</p>
-          <p className="text-sm">Try adjusting your filters or add a new one.</p>
-        </motion.div>
       )}
 
-      {/* Pagination */}
+      {/* Teacher List */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mt-6"
+        className="max-w-6xl mx-auto mt-10 bg-white shadow-lg rounded-2xl p-4 sm:p-6"
       >
-        <Pagination />
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center sm:text-left">
+          📋 Registered classes
+        </h2>
+
+        {teachers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="hidden sm:table w-full border-collapse border rounded-lg">
+              <thead>
+                <tr className="bg-indigo-100 text-indigo-700 text-left">
+                  <th className="p-3">Full Name</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Phone</th>
+                  <th className="p-3">Designation</th>
+                  <th className="p-3">Joined On</th>
+                  <th className="p-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teachers.map((t) => (
+                  <tr key={t.id} className="border-t hover:bg-gray-50">
+                    <td className="p-3">{t.fullName}</td>
+                    <td className="p-3">{t.email}</td>
+                    <td className="p-3">{t.phone}</td>
+                    <td className="p-3">{t.designation}</td>
+                    <td className="p-3">
+                      {new Date(t.createdAt).toLocaleDateString("en-IN", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => deleteTeacher(t.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Mobile Card List */}
+            <div className="sm:hidden grid gap-4">
+              {teachers.map((t) => (
+                <div
+                  key={t.id}
+                  className="border rounded-xl p-4 shadow-sm bg-gray-50 flex flex-col gap-2"
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {t.fullName}
+                    </h3>
+                    <button
+                      onClick={() => deleteTeacher(t.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">{t.email}</p>
+                  <p className="text-sm text-gray-600">{t.phone}</p>
+                  <p className="text-sm text-gray-600">{t.designation}</p>
+                  <p className="text-xs text-gray-500">
+                    Joined:{" "}
+                    {new Date(t.createdAt).toLocaleDateString("en-IN", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-600 text-center">No classes found.</p>
+        )}
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 
-export default ClassListPage;
+export default TeacherRegisterPage;
