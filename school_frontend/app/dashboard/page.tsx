@@ -104,7 +104,7 @@ const DashboardPage = () => {
           <div className="space-y-4">
             <motion.a
               whileHover={{ scale: 1.05 }}
-              href={`https://erp-kappa-nine.vercel.app/?school=${userId}`}
+              href={`https://chief-medical-leo-deadline.trycloudflare.com/?school=${userId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center py-2 px-4 bg-gradient-to-r from-teal-500 to-indigo-500 hover:brightness-110 text-white font-semibold rounded-md shadow-lg"
