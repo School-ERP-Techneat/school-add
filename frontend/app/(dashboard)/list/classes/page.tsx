@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import { Plus, Loader2, Trash2 } from "lucide-react";
+import Link from 'next/link';
 
 // ------------------ Types ------------------
 type School = {
@@ -302,6 +303,11 @@ export default function ClassListPage() {
                   <p className="text-xs text-gray-400">
                     Created: {new Date(cls.createdAt).toLocaleDateString()}
                   </p>
+                    <Link href={`/list/classes/${cls.id}`}>
+                  <button className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
+                    Edit
+                  </button>
+                </Link>
                 </div>
               </div>
             </motion.div>
