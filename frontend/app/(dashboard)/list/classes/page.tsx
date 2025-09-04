@@ -66,7 +66,7 @@ export default function ClassListPage() {
       const accessToken = token ? token : "";
       console.log("Fetching classes with token:", accessToken);
       const res = await fetch(
-        `http://localhost:4000/api/class/${schoolCode}`,
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/class/${schoolCode}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -101,12 +101,14 @@ export default function ClassListPage() {
 
     setCreating(true);
     try {
-      const token = getAccessToken();
-      const res = await fetch(`http://localhost:4000/api/class/${schoolCode}`, {
+           const token = getAccessToken();
+      const accessToken = token ? token : "";
+      console.log("Fetching classes with token:", accessToken);
+      const res = await fetch(`https://developed-ballet-projectors-shall.trycloudflare.com/api/class/${schoolCode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Authorization': `Bearer ${accessToken}`,
         },
         credentials: "include",
         body: JSON.stringify({
