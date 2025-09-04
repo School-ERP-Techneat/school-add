@@ -37,11 +37,11 @@ const Login: React.FC = () => {
   const getLoginUrl = (role: string, schoolCode: string) => {
     switch (role) {
       case 'admin':
-        return `http://localhost:4000/api/admin/${schoolCode}/login`;
+        return ` https://developed-ballet-projectors-shall.trycloudflare.com /api/admin/${schoolCode}/login`;
       case 'student':
-        return `http://localhost:4000/api/student/${schoolCode}/login`;
+        return ` https://developed-ballet-projectors-shall.trycloudflare.com /api/student/${schoolCode}/login`;
       case 'teacher':
-        return `http://localhost:4000/api/teacher/${schoolCode}/login`;
+        return ` https://developed-ballet-projectors-shall.trycloudflare.com /api/teacher/${schoolCode}/login`;
       default:
         return '';
     }

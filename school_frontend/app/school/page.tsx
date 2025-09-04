@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 
-const API_BASE = 'http://localhost:4000/api/school';
+const API_BASE = ' https://developed-ballet-projectors-shall.trycloudflare.com /api/school';
 
 const SchoolFormPage = () => {
   const router = useRouter();
