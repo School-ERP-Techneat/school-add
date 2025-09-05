@@ -17,14 +17,20 @@ type Teacher = {
 
 type Section = {
   id: string;
-  room_no: string;
+  roomNo: string;
   name: string;
-  classTeacherId: string;
   classId: string;
+  classTeacherId: string;
+  classTeacher?: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone: string;
+  };
 };
 
 export default function ClassFormPage() {
-  const { id } = useParams(); // 👈 classId from URL
+  const { id } = useParams(); // classId from URL
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [schoolCode, setSchoolCode] = useState<string | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -57,19 +63,30 @@ export default function ClassFormPage() {
   };
 
   // ✅ Fetch sections
-  console.log("ClassId from URL:", accessToken);
   const fetchSections = async () => {
+    if (!schoolCode) return;
+
     try {
-      const res = await fetch("https://developed-ballet-projectors-shall.trycloudflare.com/api/section/l", {
-        headers: {
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        credentials: "include",
-      });
+      const res = await fetch(
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}`,
+        {
+          headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          credentials: "include",
+        }
+      );
 
       const data = await res.json();
+      console.log("📦 Sections API Response:", data);
+
       if (!res.ok) throw new Error(data.message || "Failed to fetch sections");
-      setSections(data.sections || data || []); // adapt depending on API response
+
+      if (Array.isArray(data.data)) {
+        setSections(data.data);
+      } else {
+        setSections([]);
+      }
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -78,9 +95,14 @@ export default function ClassFormPage() {
   useEffect(() => {
     setAccessToken(getAccessToken());
     setSchoolCode(getSchoolCode());
-    fetchTeachers();
-    fetchSections();
   }, []);
+
+  useEffect(() => {
+    if (accessToken && schoolCode) {
+      fetchTeachers();
+      fetchSections();
+    }
+  }, [accessToken, schoolCode]);
 
   // ✅ Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,16 +114,16 @@ export default function ClassFormPage() {
     }
 
     const payload = {
-      room_no: roomNo,
+      roomNo,
       name: className,
       classTeacherId,
-      classId: String(id), // 👈 from URL
+      classId: String(id),
     };
 
     try {
       setLoading(true);
       const res = await fetch(
-        "https://developed-ballet-projectors-shall.trycloudflare.com/api/section/SCHOOL-1234-0000/",
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}/`,
         {
           method: "POST",
           headers: {
@@ -119,8 +141,12 @@ export default function ClassFormPage() {
       toast.success("✅ Section created successfully!");
       console.log("📦 API Response:", data);
 
-      // refresh list after creation
-      fetchSections();
+      // reset form
+      setRoomNo("");
+      setClassName("");
+      setClassTeacherId("");
+
+      fetchSections(); // refresh
     } catch (error: any) {
       toast.error(error.message);
       console.error("❌ API Error:", error);
@@ -164,7 +190,9 @@ export default function ClassFormPage() {
 
           {/* Class Teacher (Dropdown) */}
           <div>
-            <label className="block text-sm font-medium mb-1">Class Teacher</label>
+            <label className="block text-sm font-medium mb-1">
+              Class Teacher
+            </label>
             <select
               value={classTeacherId}
               onChange={(e) => setClassTeacherId(e.target.value)}
@@ -182,7 +210,9 @@ export default function ClassFormPage() {
 
           {/* Hidden ClassId */}
           <div>
-            <label className="block text-sm font-medium mb-1">Class ID (from URL)</label>
+            <label className="block text-sm font-medium mb-1">
+              Class ID (from URL)
+            </label>
             <input
               type="text"
               value={id}
@@ -205,9 +235,7 @@ export default function ClassFormPage() {
       {/* ✅ Section List */}
       <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-2xl">
         <h2 className="text-xl font-semibold mb-4">📋 Sections List</h2>
-        {sections.length === 0 ? (
-          <p className="text-gray-500">No sections found.</p>
-        ) : (
+        {Array.isArray(sections) && sections.length > 0 ? (
           <ul className="space-y-2">
             {sections.map((s) => (
               <li
@@ -217,7 +245,8 @@ export default function ClassFormPage() {
                 <div>
                   <p className="font-medium">{s.name}</p>
                   <p className="text-sm text-gray-500">
-                    Room: {s.room_no} | Teacher: {s.classTeacherId}
+                    Room: {s.roomNo} | Teacher:{" "}
+                    {s.classTeacher?.fullName || "Unknown"}
                   </p>
                 </div>
                 <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded">
@@ -226,6 +255,8 @@ export default function ClassFormPage() {
               </li>
             ))}
           </ul>
+        ) : (
+          <p className="text-gray-500">No sections found.</p>
         )}
       </div>
     </div>

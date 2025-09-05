@@ -11,7 +11,7 @@ router.use((req, res, next) => {
   if (req.body) req.body.schoolCode = req.params.schoolCode;
   next();
 });
-
+router.get("/", getAllSections);
 router.use(verifyAuth);
 
 router.post(
@@ -20,5 +20,5 @@ router.post(
   validateSchema(createSectionSchema),
   createSection
 );
-router.get("/", getAllSections);
+
 export default router;
