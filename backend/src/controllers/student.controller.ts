@@ -33,6 +33,7 @@ export const registerStudent = asyncHandler(
 
       let studentRole = await prisma.role.findUnique({
         where: {
+          name_schoolCode: {
             name: "student",
             schoolCode,
           },
@@ -260,9 +261,10 @@ export const createStudent = asyncHandler(
 
     let studentRole = await prisma.role.findUnique({
       where: {
+        name_schoolCode: {
           name: "student",
           schoolCode,
-        
+        },
       },
     });
 
