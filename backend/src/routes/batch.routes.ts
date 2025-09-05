@@ -3,7 +3,7 @@ import { verifyAuth } from "../middlewares/authMiddleware";
 import { verifyAccess } from "../middlewares/verifyAccess";
 import { validateSchema } from "../middlewares/schemaValidator";
 import { createBatchSchema } from "../types/zodTypes";
-import { createBatch } from "../controllers/batch.controller";
+import { createBatch ,getAllBatches } from "../controllers/batch.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -21,5 +21,7 @@ router.post(
   validateSchema(createBatchSchema),
   createBatch
 );
+
+router.get("/", getAllBatches);
 
 export default router;

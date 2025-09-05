@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import { Plus, Loader2, Trash2 } from "lucide-react";
-import Link from 'next/link';
+import Link from "next/link";
 
 // ------------------ Types ------------------
 type School = {
@@ -36,6 +36,10 @@ type ClassItem = {
 };
 
 // ------------------ Helpers ------------------
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://developed-ballet-projectors-shall.trycloudflare.com";
+
 const getAccessToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
@@ -45,6 +49,7 @@ const getSchoolCode = () =>
 // ------------------ Component ------------------
 export default function ClassListPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
@@ -63,19 +68,14 @@ export default function ClassListPage() {
     if (!schoolCode) return;
     setLoading(true);
     try {
-      const token = getAccessToken();
-      const accessToken = token ? token : "";
-      console.log("Fetching classes with token:", accessToken);
-      const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/class/${schoolCode}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          credentials: "include",
-        }
-      );
+      const accessToken = getAccessToken() ?? "";
+      const res = await fetch(`${API_BASE}/api/class/${schoolCode}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        credentials: "include",
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to fetch classes");
@@ -88,9 +88,34 @@ export default function ClassListPage() {
     }
   }, [schoolCode]);
 
+  // ✅ Fetch Batches
+  const fetchBatches = useCallback(async () => {
+    if (!schoolCode) return;
+    try {
+      const accessToken = getAccessToken() ?? "";
+      const res = await fetch(`${API_BASE}/api/batch/${schoolCode}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to fetch batches");
+
+      setBatches(data.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Error loading batches");
+    }
+  }, [schoolCode]);
+
   useEffect(() => {
-    if (schoolCode) fetchClasses();
-  }, [schoolCode, fetchClasses]);
+    if (schoolCode) {
+      fetchClasses();
+      fetchBatches();
+    }
+  }, [schoolCode, fetchClasses, fetchBatches]);
 
   // ✅ Handle Create Class
   async function handleCreateClass(e: React.FormEvent) {
@@ -102,14 +127,12 @@ export default function ClassListPage() {
 
     setCreating(true);
     try {
-           const token = getAccessToken();
-      const accessToken = token ? token : "";
-      console.log("Fetching classes with token:", accessToken);
-      const res = await fetch(`https://developed-ballet-projectors-shall.trycloudflare.com/api/class/${schoolCode}`, {
+      const accessToken = getAccessToken() ?? "";
+      const res = await fetch(`${API_BASE}/api/class/${schoolCode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         credentials: "include",
         body: JSON.stringify({
@@ -140,13 +163,13 @@ export default function ClassListPage() {
     if (!confirm("Are you sure you want to delete this class?")) return;
 
     try {
-      const token = getAccessToken();
+      const accessToken = getAccessToken() ?? "";
       const res = await fetch(
-        `http://localhost:4000/api/class/${schoolCode}/classId/${id}`,
+        `${API_BASE}/api/class/${schoolCode}/classId/${id}`,
         {
           method: "DELETE",
           headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Authorization: `Bearer ${accessToken}`,
           },
           credentials: "include",
         }
@@ -175,7 +198,7 @@ export default function ClassListPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 p-6">
       <Toaster position="top-right" />
       <h1 className="text-3xl font-bold text-center sm:text-left mb-8 text-gray-800">
-        📚 Class List
+        📚 Class List ({classes.length})
       </h1>
 
       {/* Floating Add Button */}
@@ -189,68 +212,80 @@ export default function ClassListPage() {
       </motion.button>
 
       {/* Modal Form */}
-      {showForm && (
-        <div
-          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
-          onClick={() => setShowForm(false)}
-        >
+      <AnimatePresence>
+        {showForm && (
           <motion.div
-            onClick={(e) => e.stopPropagation()}
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-lg mx-4 sm:mx-0"
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+            onClick={() => setShowForm(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <h2 className="text-2xl font-bold text-indigo-600 mb-4 text-center">
-              ➕ Create New Class
-            </h2>
-            <form onSubmit={handleCreateClass} className="grid gap-4">
-              <input
-                type="text"
-                placeholder="Class Name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-                required
-              />
-              <input
-                type="number"
-                placeholder="Standard"
-                value={newStandard}
-                onChange={(e) =>
-                  setNewStandard(e.target.value ? Number(e.target.value) : "")
-                }
-                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Batch ID"
-                value={newBatchId}
-                onChange={(e) => setNewBatchId(e.target.value)}
-                className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-                required
-              />
-              <div className="flex flex-col sm:flex-row justify-between gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  className="px-4 py-2 bg-gray-200 rounded-lg w-full sm:w-auto"
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-lg mx-4 sm:mx-0"
+            >
+              <h2 className="text-2xl font-bold text-indigo-600 mb-4 text-center">
+                ➕ Create New Class
+              </h2>
+              <form onSubmit={handleCreateClass} className="grid gap-4">
+                <input
+                  type="text"
+                  placeholder="Class Name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Standard"
+                  value={newStandard}
+                  onChange={(e) =>
+                    setNewStandard(e.target.value ? Number(e.target.value) : "")
+                  }
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                  required
+                />
+                <select
+                  value={newBatchId}
+                  onChange={(e) => setNewBatchId(e.target.value)}
+                  className="p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                  required
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-md w-full sm:w-auto"
-                >
-                  {creating ? "Creating..." : "Create"}
-                </button>
-              </div>
-            </form>
+                  <option value="">Select Batch</option>
+                  {batches.map((batch) => (
+                    <option key={batch.id} value={batch.id}>
+                      {batch.year} (
+                      {new Date(batch.startDate).toLocaleDateString()} -{" "}
+                      {new Date(batch.endDate).toLocaleDateString()})
+                    </option>
+                  ))}
+                </select>
+                <div className="flex flex-col sm:flex-row justify-between gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="px-4 py-2 bg-gray-200 rounded-lg w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-md w-full sm:w-auto"
+                  >
+                    {creating ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Class List */}
       {loading ? (
@@ -303,11 +338,11 @@ export default function ClassListPage() {
                   <p className="text-xs text-gray-400">
                     Created: {new Date(cls.createdAt).toLocaleDateString()}
                   </p>
-                    <Link href={`/list/classes/${cls.id}`}>
-                  <button className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition">
-                    Edit
-                  </button>
-                </Link>
+                  <Link href={`/list/classes/${cls.id}`}>
+                    <button className="text-blue-500 hover:text-blue-700 font-medium transition">
+                      Edit
+                    </button>
+                  </Link>
                 </div>
               </div>
             </motion.div>

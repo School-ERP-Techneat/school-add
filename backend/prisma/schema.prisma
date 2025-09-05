@@ -142,7 +142,11 @@ model Batch {
   school     School    @relation(fields: [schoolCode], references: [code])
   classes    Class[]
   students   Student[]
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
+
 
 model Class {
   id            String   @id @default(cuid())
@@ -162,7 +166,6 @@ model Class {
 }
 
 
-
 model Section {
   id             String          @id @default(cuid())
   name           String
@@ -176,7 +179,11 @@ model Section {
   class          Class           @relation(fields: [classId], references: [id])
   classTeacher   Teacher         @relation(fields: [classTeacherId], references: [id])
   students       Student[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
+
 
 model Attendance {
   id        String           @id @default(cuid())

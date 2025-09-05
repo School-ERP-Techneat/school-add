@@ -3,7 +3,7 @@ import { verifyAuth } from "../middlewares/authMiddleware";
 import { validateSchema } from "../middlewares/schemaValidator";
 import { verifyAccess } from "../middlewares/verifyAccess";
 import { createSectionSchema } from "../types/zodTypes";
-import { createSection } from "../controllers/section.controller";
+import { createSection ,getAllSections } from "../controllers/section.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -20,5 +20,5 @@ router.post(
   validateSchema(createSectionSchema),
   createSection
 );
-
+router.get("/", getAllSections);
 export default router;

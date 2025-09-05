@@ -15,14 +15,24 @@ type Teacher = {
   fullName: string;
 };
 
+type Section = {
+  id: string;
+  room_no: string;
+  name: string;
+  classTeacherId: string;
+  classId: string;
+};
+
 export default function ClassFormPage() {
   const { id } = useParams(); // 👈 classId from URL
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [schoolCode, setSchoolCode] = useState<string | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
   const [roomNo, setRoomNo] = useState("");
   const [className, setClassName] = useState("");
   const [classTeacherId, setClassTeacherId] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // ✅ Fetch teachers
   const fetchTeachers = async () => {
@@ -46,14 +56,34 @@ export default function ClassFormPage() {
     }
   };
 
+  // ✅ Fetch sections
+  console.log("ClassId from URL:", accessToken);
+  const fetchSections = async () => {
+    try {
+      const res = await fetch("https://developed-ballet-projectors-shall.trycloudflare.com/api/section/l", {
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to fetch sections");
+      setSections(data.sections || data || []); // adapt depending on API response
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   useEffect(() => {
     setAccessToken(getAccessToken());
     setSchoolCode(getSchoolCode());
     fetchTeachers();
+    fetchSections();
   }, []);
 
   // ✅ Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!roomNo || !className || !classTeacherId) {
@@ -68,14 +98,41 @@ export default function ClassFormPage() {
       classId: String(id), // 👈 from URL
     };
 
-    console.log("✅ Submitted Data:", payload);
-    toast.success("Form submitted! Check console for payload.");
+    try {
+      setLoading(true);
+      const res = await fetch(
+        "https://developed-ballet-projectors-shall.trycloudflare.com/api/section/SCHOOL-1234-0000/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify(payload),
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to create section");
+
+      toast.success("✅ Section created successfully!");
+      console.log("📦 API Response:", data);
+
+      // refresh list after creation
+      fetchSections();
+    } catch (error: any) {
+      toast.error(error.message);
+      console.error("❌ API Error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gray-50 p-6">
       <Toaster position="top-right" />
-      <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-lg">
+      <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-lg mb-8">
         <h1 className="text-2xl font-bold mb-6 text-center">🏫 Create Class</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,11 +194,39 @@ export default function ClassFormPage() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
           >
-            Save
+            {loading ? "Saving..." : "Save"}
           </button>
         </form>
+      </div>
+
+      {/* ✅ Section List */}
+      <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-2xl">
+        <h2 className="text-xl font-semibold mb-4">📋 Sections List</h2>
+        {sections.length === 0 ? (
+          <p className="text-gray-500">No sections found.</p>
+        ) : (
+          <ul className="space-y-2">
+            {sections.map((s) => (
+              <li
+                key={s.id}
+                className="p-3 border rounded-lg flex justify-between items-center"
+              >
+                <div>
+                  <p className="font-medium">{s.name}</p>
+                  <p className="text-sm text-gray-500">
+                    Room: {s.room_no} | Teacher: {s.classTeacherId}
+                  </p>
+                </div>
+                <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded">
+                  Class {s.classId}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
