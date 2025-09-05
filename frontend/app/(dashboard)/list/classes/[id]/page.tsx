@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
+import { body } from "framer-motion/client";
 
 const getAccessToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
@@ -30,7 +31,10 @@ type Section = {
 };
 
 export default function ClassFormPage() {
-  const { id } = useParams(); // classId from URL
+  // ✅ Safe extraction of classId from params
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id ?? "";
+
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [schoolCode, setSchoolCode] = useState<string | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -51,44 +55,65 @@ export default function ClassFormPage() {
         `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${code}/all`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          credentials: "include",
         }
       );
       const data = await res.json();
+      console.log("📦 Teachers API Response:", data);
+
       if (!res.ok) throw new Error(data.message || "Failed to fetch teachers");
-      setTeachers(data.teachers || []);
+
+      // 🔥 Normalize keys (assuming backend returns snake_case)
+      const mapped = (data.teachers || []).map((t: any) => ({
+        id: t.id,
+        fullName: t.full_name ?? t.fullName,
+      }));
+      setTeachers(mapped);
     } catch (error: any) {
       toast.error(error.message);
+      console.error("❌ Fetch Teachers Error:", error);
     }
   };
 
   // ✅ Fetch sections
   const fetchSections = async () => {
-    if (!schoolCode) return;
+    const token = getAccessToken();
+    if (!schoolCode || !token) return;
 
     try {
       const res = await fetch(
         `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}`,
         {
-          headers: {
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
-          credentials: "include",
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const data = await res.json();
-      console.log("📦 Sections API Response:", data);
 
       if (!res.ok) throw new Error(data.message || "Failed to fetch sections");
 
       if (Array.isArray(data.data)) {
-        setSections(data.data);
+        const mapped = data.data.map((s: any) => ({
+          id: s.id,
+          roomNo: s.room_no,
+          name: s.name,
+          classId: s.classId,
+          classTeacherId: s.classTeacherId,
+          classTeacher: s.class_teacher
+            ? {
+                id: s.class_teacher.id,
+                fullName: s.class_teacher.full_name,
+                email: s.class_teacher.email,
+                phone: s.class_teacher.phone,
+              }
+            : undefined,
+        }));
+        setSections(mapped);
       } else {
         setSections([]);
       }
     } catch (error: any) {
       toast.error(error.message);
+      console.error("❌ Fetch Sections Error:", error);
     }
   };
 
@@ -107,39 +132,46 @@ export default function ClassFormPage() {
   // ✅ Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const token = getAccessToken();
 
     if (!roomNo || !className || !classTeacherId) {
       toast.error("Please fill all fields");
       return;
     }
 
+    if (!id) {
+      toast.error("Class ID is missing from URL");
+      return;
+    }
+
+    // 🔥 Send snake_case keys as expected by backend
     const payload = {
-      roomNo,
+      room_no: roomNo,
       name: className,
-      classTeacherId,
-      classId: String(id),
+      classTeacherId: classTeacherId,
+      classId: id, // guaranteed string now
     };
 
     try {
       setLoading(true);
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}/`,
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
-          credentials: "include",
         }
       );
-
+   console.log(payload)
       const data = await res.json();
+      console.log("📦 Create Section API Response:", data);
+
       if (!res.ok) throw new Error(data.message || "Failed to create section");
 
       toast.success("✅ Section created successfully!");
-      console.log("📦 API Response:", data);
 
       // reset form
       setRoomNo("");
@@ -149,7 +181,7 @@ export default function ClassFormPage() {
       fetchSections(); // refresh
     } catch (error: any) {
       toast.error(error.message);
-      console.error("❌ API Error:", error);
+      console.error("❌ Create Section Error:", error);
     } finally {
       setLoading(false);
     }
@@ -208,18 +240,20 @@ export default function ClassFormPage() {
             </select>
           </div>
 
-          {/* Hidden ClassId */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Class ID (from URL)
-            </label>
-            <input
-              type="text"
-              value={id}
-              readOnly
-              className="w-full border p-2 rounded-lg bg-gray-100"
-            />
-          </div>
+          {/* Hidden ClassId (only show if available) */}
+          {id && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Class ID (from URL)
+              </label>
+              <input
+                type="text"
+                value={id}
+                readOnly
+                className="w-full border p-2 rounded-lg bg-gray-100"
+              />
+            </div>
+          )}
 
           {/* Submit */}
           <button

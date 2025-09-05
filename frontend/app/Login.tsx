@@ -14,7 +14,11 @@ const Login: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<'admin' | 'student' | 'teacher'>('admin');
-  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [formData, setFormData] = useState<{ username?: string; email?: string; password: string }>({
+    username: '',
+    email: '',
+    password: '',
+  });
   const [schoolCode, setSchoolCode] = useState<string | null>(null);
 
   // ✅ Get schoolCode from query param
@@ -58,11 +62,17 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
+      // Build request body depending on role
+      const payload =
+        role === 'teacher'
+          ? { email: formData.email, password: formData.password }
+          : { username: formData.username, password: formData.password };
+
       const response = await fetch(getLoginUrl(role, schoolCode), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // critical for cookie-based auth
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -150,21 +160,41 @@ const Login: React.FC = () => {
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username */}
-            <div className="relative">
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                required
-                className="peer w-full px-4 pt-5 pb-2 rounded-xl border border-gray-300 text-gray-900 placeholder-transparent focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
-                placeholder="Username"
-              />
-              <label className="absolute left-4 top-2 text-sm text-gray-500 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-indigo-500">
-                Username
-              </label>
-            </div>
+            {/* Username for Admin & Student */}
+            {(role === 'admin' || role === 'student') && (
+              <div className="relative">
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                  className="peer w-full px-4 pt-5 pb-2 rounded-xl border border-gray-300 text-gray-900 placeholder-transparent focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  placeholder="Username"
+                />
+                <label className="absolute left-4 top-2 text-sm text-gray-500 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-indigo-500">
+                  Username
+                </label>
+              </div>
+            )}
+
+            {/* Email for Teacher */}
+            {role === 'teacher' && (
+              <div className="relative">
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="peer w-full px-4 pt-5 pb-2 rounded-xl border border-gray-300 text-gray-900 placeholder-transparent focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                  placeholder="Email"
+                />
+                <label className="absolute left-4 top-2 text-sm text-gray-500 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-gray-400 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-sm peer-focus:text-indigo-500">
+                  Email
+                </label>
+              </div>
+            )}
 
             {/* Password */}
             <div className="relative">
