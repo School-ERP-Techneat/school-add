@@ -52,7 +52,7 @@ const Menu = () => {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
-
+   
   if (loading) return <p className="text-gray-500">Loading school info...</p>;
   if (!school) return <p className="text-red-500">No school data available.</p>;
 
