@@ -25,7 +25,7 @@ export const registerTeacher = asyncHandler(
           name_schoolCode: {
             name: "teacher",
             schoolCode,
-          },
+          
         },
       });
 
