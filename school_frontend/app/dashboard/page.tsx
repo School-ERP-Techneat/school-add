@@ -25,6 +25,9 @@ const DashboardPage = () => {
   const [authChecked, setAuthChecked] = useState(false);
    const [darkMode, setDarkMode] = useState(false);
 
+   const getSchoolCode = () =>
+    typeof window !== 'undefined' ? localStorage.getItem('schoolCode') : null;
+
   // 🔐 Auth check
   useEffect(() => {
     const match = document.cookie.match(/userId=([^;]+)/);
@@ -196,6 +199,7 @@ const DashboardPage = () => {
                 <DataTable
                   headers={['Name', 'Role', 'Department', 'Actions']}
                   rows={adminData}
+                  // @ts-ignore
                   onDelete={handleDelete}
                 />
               </motion.div>
@@ -204,7 +208,7 @@ const DashboardPage = () => {
                 No admin users found for this school.
               </p>
             )}
-            <Link href="/add_user">
+            <Link href={`/add_user/?schoolCode=${getSchoolCode()}`}>
               <ActionButton label="➕ Add Admin User" />
             </Link>
           </SectionBlock>

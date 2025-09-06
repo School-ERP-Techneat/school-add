@@ -14,7 +14,6 @@ router.use((req, res, next) => {
   if (req.body) req.body.schoolCode = req.params.schoolCode;
   next();
 });
-
 router.use(verifyAuth);
 
 router.post(
