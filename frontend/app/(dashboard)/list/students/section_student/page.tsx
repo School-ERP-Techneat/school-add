@@ -21,7 +21,7 @@ type Student = {
   name: string;
   admissionNo?: string;
   email?: string;
-  status: string;
+  status: "active" | "inactive";
 };
 
 export default function SectionStudentPage() {
@@ -36,7 +36,10 @@ export default function SectionStudentPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [updating, setUpdating] = useState<string | null>(null);
 
   const accessToken = getLS("accessToken");
 
@@ -50,7 +53,15 @@ export default function SectionStudentPage() {
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         const data = await res.json();
-        setStudents(data?.data || []);
+
+        // Normalize status values to lowercase
+        const normalized = (data?.data || []).map((s: any) => ({
+          ...s,
+          status:
+            s.status?.toLowerCase() === "active" ? "active" : "inactive",
+        }));
+
+        setStudents(normalized);
       } catch (err) {
         console.error("Error fetching students:", err);
       } finally {
@@ -60,6 +71,52 @@ export default function SectionStudentPage() {
 
     fetchStudents();
   }, [schoolCode, sectionId]);
+
+  // ✅ Update student status (activate/deactivate) with PUT
+  const updateStudentStatus = async (
+    studentId: string,
+    newStatus: "ACTIVE" | "INACTIVE"
+  ) => {
+    if (!schoolCode) return;
+    setUpdating(studentId);
+
+    try {
+      const res = await fetch(
+        `https://developed-ballet-projectors-shall.trycloudflare.com/api/student/${schoolCode}/update-status/${studentId}`,
+        {
+          method: "PUT", // ✅ FIXED: use PUT
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ status: newStatus }), // ✅ send uppercase
+        }
+      );
+
+      const data = await res.json();
+      console.log("Update response:", data);
+
+      if (res.ok) {
+        // ✅ Update local state in lowercase
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === studentId
+              ? {
+                  ...s,
+                  status: newStatus.toLowerCase() as "active" | "inactive",
+                }
+              : s
+          )
+        );
+      } else {
+        console.error("Failed to update student:", data);
+      }
+    } catch (err) {
+      console.error("Error updating student status:", err);
+    } finally {
+      setUpdating(null);
+    }
+  };
 
   // ✅ Filter students by search + status
   const filteredStudents = useMemo(() => {
@@ -113,7 +170,7 @@ export default function SectionStudentPage() {
         </div>
       </div>
 
-      {/* Summary Stats (Live with filters) */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="p-4 bg-indigo-100 border rounded-xl text-center">
           <p className="text-sm text-gray-600">Total Students</p>
@@ -160,7 +217,9 @@ export default function SectionStudentPage() {
                 className="bg-transparent text-sm outline-none"
                 value={statusFilter}
                 onChange={(e) =>
-                  setStatusFilter(e.target.value as "all" | "active" | "inactive")
+                  setStatusFilter(
+                    e.target.value as "all" | "active" | "inactive"
+                  )
                 }
               >
                 <option value="all">All</option>
@@ -191,6 +250,7 @@ export default function SectionStudentPage() {
                   <th className="border p-2">Admission No</th>
                   <th className="border p-2">Email</th>
                   <th className="border p-2">Status</th>
+                  <th className="border p-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,8 +275,34 @@ export default function SectionStudentPage() {
                             : "bg-green-100 text-green-700"
                         }`}
                       >
-                        {student.status}
+                        {student.status === "active" ? "Active" : "Inactive"}
                       </span>
+                    </td>
+                    <td className="border p-2">
+                      <button
+                        disabled={updating === student.id}
+                        onClick={() =>
+                          updateStudentStatus(
+                            student.id,
+                            student.status === "active"
+                              ? "INACTIVE"
+                              : "ACTIVE"
+                          )
+                        }
+                        className={`px-3 py-1 rounded text-xs font-medium ${
+                          student.status === "inactive"
+                            ? "bg-green-500 text-white hover:bg-green-600"
+                            : "bg-red-500 text-white hover:bg-red-600"
+                        } disabled:opacity-50`}
+                      >
+                        {updating === student.id ? (
+                          <Loader2 className="animate-spin w-4 h-4" />
+                        ) : student.status === "inactive" ? (
+                          "Activate"
+                        ) : (
+                          "Deactivate"
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}
