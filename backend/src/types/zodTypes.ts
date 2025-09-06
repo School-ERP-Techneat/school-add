@@ -83,7 +83,6 @@ export const createStudentSchema = z.object({
   password: z.string().min(6),
   photo: z.string().url().optional(),
   sectionId: z.string(),
-  batchId: z.string(),
   admissionNo: z.string(),
   schoolCode: z.string().min(3),
 });
@@ -107,7 +106,6 @@ export const createPermissionSchema = z.object({
 export const createClassSchema = z.object({
   standard: z.number(),
   schoolCode: z.string().min(3),
-  batchId: z.string(),
 });
 
 export const createSectionSchema = z.object({

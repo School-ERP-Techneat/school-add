@@ -1,17 +1,21 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
+import { getBatchForSchool } from "../middlewares/createBatch";
 
 // ✅ Create a class
 export const createClass = asyncHandler(async (req: Request, res: Response) => {
-  const { name, standard, schoolCode, batchId } = req.body;
+  const { standard, schoolCode } = req.body;
 
   // Check if class already exists
+
+  const batch = await getBatchForSchool(schoolCode);
+
   const existingClass = await prisma.class.findFirst({
     where: {
       standard,
       schoolCode,
-      batchId,
+      batchId: batch.id,
     },
   });
 
@@ -30,7 +34,7 @@ export const createClass = asyncHandler(async (req: Request, res: Response) => {
         connect: { code: schoolCode },
       },
       batch: {
-        connect: { id: batchId },
+        connect: { id: batch.id },
       },
     },
   });
@@ -43,20 +47,27 @@ export const createClass = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // ✅ Get all classes
-export const getAllClasses = asyncHandler(async (req: Request, res: Response) => {
-  const classes = await prisma.class.findMany({
-    include: {
-      school: true, // related school
-      batch: true,  // related batch
-    },
-    orderBy: {
-      createdAt: "desc", // newest first
-    },
-  });
+export const getAllClasses = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { schoolCode } = req.params;
 
-  return res.status(200).json({
-    success: true,
-    message: "Classes fetched successfully",
-    data: classes,
-  });
-});
+    const classes = await prisma.class.findMany({
+      where: {
+        schoolCode,
+      },
+      include: {
+        school: true, // related school
+        batch: true, // related batch
+      },
+      orderBy: {
+        createdAt: "desc", // newest first
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Classes fetched successfully",
+      data: classes,
+    });
+  }
+);

@@ -5,6 +5,7 @@ import { createAccessToken } from "../utils/jwtUtil";
 import { asyncHandler } from "../utils/asyncHandler";
 import { StudentStatus } from "@prisma/client";
 import { connect } from "http2";
+import { getBatchForSchool } from "../middlewares/createBatch";
 
 export const registerStudent = asyncHandler(
   async (req: Request, res: Response) => {
@@ -249,15 +250,8 @@ export const updateStudentActiveStatus = asyncHandler(
 
 export const createStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const {
-      name,
-      email,
-      admissionNo,
-      sectionId,
-      batchId,
-      schoolCode,
-      password,
-    } = req.body;
+    const { name, email, admissionNo, sectionId, schoolCode, password } =
+      req.body;
 
     let studentRole = await prisma.role.findUnique({
       where: {
@@ -276,6 +270,8 @@ export const createStudent = asyncHandler(
         },
       });
     }
+
+    const batch = await getBatchForSchool(schoolCode);
 
     const hashedPassword = await hashPassword(password);
     const newStudent = await prisma.student.create({
@@ -297,7 +293,7 @@ export const createStudent = asyncHandler(
         status: StudentStatus.ACTIVE,
         Batch: {
           connect: {
-            id: batchId,
+            id: batch.id,
           },
         },
         School: {
