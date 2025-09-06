@@ -25,7 +25,6 @@ export const createClass = asyncHandler(async (req: Request, res: Response) => {
   // Create new class
   const createdClass = await prisma.class.create({
     data: {
-      name,
       standard,
       school: {
         connect: { code: schoolCode },

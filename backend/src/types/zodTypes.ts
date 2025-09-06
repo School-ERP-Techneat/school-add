@@ -2,14 +2,14 @@ import { AttendanceStatus } from "@prisma/client";
 import * as z from "zod";
 
 export const createAdminSchema = z.object({
-  username: z.string().min(4),
+  email: z.string().min(4),
   password: z.string().min(6),
   designation: z.string(),
   schoolCode: z.string().min(3),
 });
 
 export const updateAdminSchema = z.object({
-  username: z.string().min(6),
+  email: z.string().min(6),
   designation: z.string(),
   password: z.string().optional().nullable(),
   schoolCode: z.string().min(3),
@@ -43,13 +43,13 @@ export const createSchoolSchema = z.object({
   address: addressSchema,
 });
 
-export const userSignupSchema = z.object({
+export const createSchoolOwnerSchema = z.object({
   password: z.string().min(6),
   email: z.email(),
   locationCode: z.string(),
 });
 
-export const userLoginSchema = z.object({
+export const loginSchoolOwnerSchema = z.object({
   email: z.email(),
   password: z.string().min(6),
 });
@@ -105,7 +105,6 @@ export const createPermissionSchema = z.object({
 });
 
 export const createClassSchema = z.object({
-  name: z.string(),
   standard: z.number(),
   schoolCode: z.string().min(3),
   batchId: z.string(),

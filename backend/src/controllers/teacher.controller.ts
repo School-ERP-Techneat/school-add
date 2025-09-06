@@ -235,3 +235,4 @@ export const deleteTeacher = asyncHandler(
     }
   }
 );
+

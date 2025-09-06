@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler";
 import prisma from "../config/prisma";
 
@@ -40,5 +40,28 @@ export const createSection = asyncHandler(
       data: createdSection,
       success: true,
     });
+  }
+);
+
+export const getClassSections = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { classId } = req.params;
+
+      const sections = await prisma.section.findMany({
+        where: {
+          classId,
+        },
+      });
+
+      return res.status(200).json({
+        message: "Sections retrieved successfully",
+        success: true,
+        data: sections,
+      });
+    } catch (error) {
+      console.log("Error inside the getClassSection: ", error);
+      next(error);
+    }
   }
 );

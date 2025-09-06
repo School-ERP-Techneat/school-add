@@ -3,7 +3,10 @@ import { verifyAuth } from "../middlewares/authMiddleware";
 import { validateSchema } from "../middlewares/schemaValidator";
 import { verifyAccess } from "../middlewares/verifyAccess";
 import { createSectionSchema } from "../types/zodTypes";
-import { createSection } from "../controllers/section.controller";
+import {
+  createSection,
+  getClassSections,
+} from "../controllers/section.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -21,4 +24,9 @@ router.post(
   createSection
 );
 
+router.get(
+  "/class/:classId",
+  verifyAccess(["teacher", "admin"]),
+  getClassSections
+);
 export default router;
