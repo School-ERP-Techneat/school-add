@@ -46,7 +46,7 @@ export default function BatchListPage() {
       const accessToken = token ? token : "";
 
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/batch/${schoolCode}`,
+        `http://localhost:4000/api/batch/${schoolCode}`,
         {
           headers: {
             "Content-Type": "application/json",

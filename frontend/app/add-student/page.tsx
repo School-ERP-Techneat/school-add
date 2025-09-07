@@ -105,7 +105,7 @@ export default function AddStudentPage() {
     try {
       setLoading(true);
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/student/${schoolCode}/register`,
+        `http://localhost:4000/api/student/${schoolCode}/register`,
         {
           method: "POST",
           headers: {

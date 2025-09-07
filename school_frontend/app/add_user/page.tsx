@@ -46,7 +46,7 @@ export default function RegisterAdmin() {
       }
 
       // ✅ Correct API endpoint with schoolCode
-      const url = ` https://developed-ballet-projectors-shall.trycloudflare.com/api/admin/${formData.schoolCode}/register`;
+      const url = ` http://localhost:4000/api/admin/${formData.schoolCode}/register`;
 
       const res = await fetch(url, {
         method: 'POST',

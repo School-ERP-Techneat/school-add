@@ -159,7 +159,6 @@ export const getAttendanceBySection = asyncHandler(
           select: {
             class: {
               select: {
-                name: true,
                 standard: true,
                 batch: {
                   select: {
@@ -188,7 +187,6 @@ export const getAttendanceBySection = asyncHandler(
       date: record.date,
       status: record.status,
       sectionId: record.sectionId,
-      class: record.section.class.name,
       section: record.section.name,
       batch: record.section.class.batch,
       student: {

@@ -15,7 +15,7 @@ export const cookieOptions = {
 export const createAdmin = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { username, password, designation, schoolCode } = req.body;
+      const { email, password, designation, schoolCode } = req.body;
       const hashedPassword = await hashPassword(password);
 
       let adminRole = await prisma.role.findFirst({
@@ -45,7 +45,7 @@ export const createAdmin = asyncHandler(
         data: {
           designation,
           password: hashedPassword,
-          username,
+          email,
           school: {
             connect: {
               code: school.code,
@@ -58,7 +58,7 @@ export const createAdmin = asyncHandler(
           },
         },
         select: {
-          username: true,
+          email: true,
           designation: true,
           schoolCode: true,
           createdAt: true,
@@ -80,12 +80,12 @@ export const createAdmin = asyncHandler(
 export const loginAdmin = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { username, password, schoolCode } = req.body;
+      const { email, password, schoolCode } = req.body;
 
       const admin = await prisma.admin.findUnique({
         where: {
-          username_schoolCode: {
-            username,
+          email_schoolCode: {
+            email,
             schoolCode,
           },
         },
@@ -104,7 +104,7 @@ export const loginAdmin = asyncHandler(
 
       const accessToken = createAccessToken({
         id: admin.id as string,
-        username: admin.username as string,
+        username: admin.email as string,
         roleId: admin.roleId as string,
         schoolCode: admin.schoolCode as string,
       });
@@ -123,7 +123,7 @@ export const loginAdmin = asyncHandler(
 export const updateAdmin = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { username, designation } = req.body;
+      const { email, designation } = req.body;
       const adminId = req.user?.id;
 
       const updatedAdmin = await prisma.admin.update({
@@ -131,7 +131,7 @@ export const updateAdmin = asyncHandler(
           id: adminId,
         },
         data: {
-          username,
+          email,
           designation,
         },
       });
@@ -180,7 +180,7 @@ export const getAdminById = asyncHandler(
         where: { id: adminId, schoolCode },
         select: {
           id: true,
-          username: true,
+          email: true,
           designation: true,
           schoolCode: true,
           createdAt: true,
@@ -214,7 +214,7 @@ export const getAdminsBySchoolCode = asyncHandler(
       where: { schoolCode },
       select: {
         id: true,
-        username: true,
+        email: true,
         designation: true,
         createdAt: true,
         updatedAt: true,
@@ -243,12 +243,12 @@ export const deleteAdminById = asyncHandler(
 export const updateAdminById = asyncHandler(
   async (req: Request, res: Response) => {
     const { adminId } = req.params;
-    const { username, designation, password } = req.body;
+    const { email, designation, password } = req.body;
 
     const updatedAdmin = await prisma.admin.update({
       where: { id: adminId },
       data: {
-        username,
+        email,
         designation,
         password: password ? await hashPassword(password) : undefined,
       },

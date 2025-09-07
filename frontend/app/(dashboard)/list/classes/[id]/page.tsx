@@ -169,7 +169,7 @@ export default function ClassFormPage() {
     if (!accessToken || !schoolCode) return;
     try {
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/all`,
+        `http://localhost:4000/api/teacher/${schoolCode}/all`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const data = await res.json();
@@ -193,7 +193,7 @@ export default function ClassFormPage() {
     if (!accessToken || !schoolCode) return;
     try {
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}`,
+        `http://localhost:4000/api/section/${schoolCode}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const data = await res.json();
@@ -241,7 +241,7 @@ export default function ClassFormPage() {
     try {
       setLoading(true);
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}`,
+        `http://localhost:4000/api/section/${schoolCode}`,
         {
           method: "POST",
           headers: {

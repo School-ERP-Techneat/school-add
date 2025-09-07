@@ -49,7 +49,7 @@ export default function SectionStudentPage() {
     const fetchStudents = async () => {
       try {
         const res = await fetch(
-          `https://developed-ballet-projectors-shall.trycloudflare.com/api/student/${schoolCode}/all/inactive/class-section/${sectionId}`,
+          `http://localhost:4000/api/student/${schoolCode}/all/inactive/class-section/${sectionId}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         const data = await res.json();
@@ -82,7 +82,7 @@ export default function SectionStudentPage() {
 
     try {
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/student/${schoolCode}/update-status/${studentId}`,
+        `http://localhost:4000/api/student/${schoolCode}/update-status/${studentId}`,
         {
           method: "PUT", // ✅ FIXED: use PUT
           headers: {

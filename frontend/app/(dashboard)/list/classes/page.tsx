@@ -38,7 +38,7 @@ type ClassItem = {
 // ------------------ Helpers ------------------
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://developed-ballet-projectors-shall.trycloudflare.com";
+  "http://localhost:4000";
 
 const getAccessToken = () =>
   typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;

@@ -107,7 +107,7 @@ export default function ClassFormPage() {
     try {
       setLoading(true);
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/section/${schoolCode}`,
+        `http://localhost:4000/api/section/${schoolCode}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       const data = await res.json();

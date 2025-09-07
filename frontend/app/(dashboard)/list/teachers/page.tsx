@@ -61,7 +61,7 @@ const TeacherRegisterPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/register`,
+        `http://localhost:4000/api/teacher/${schoolCode}/register`,
         {
           method: 'POST',
           headers: {
@@ -102,7 +102,7 @@ const TeacherRegisterPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/all`,
+        `http://localhost:4000/api/teacher/${schoolCode}/all`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -130,7 +130,7 @@ const TeacherRegisterPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        `https://developed-ballet-projectors-shall.trycloudflare.com/api/teacher/${schoolCode}/teacherId/${teacherId}`,
+        `http://localhost:4000/api/teacher/${schoolCode}/teacherId/${teacherId}`,
         {
           method: 'DELETE',
           headers: {

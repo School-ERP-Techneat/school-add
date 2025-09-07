@@ -23,7 +23,7 @@ const DataTable = ({
 const match = document.cookie.match(/userId=([^;]+)/);
 const schoolCode = match ? match[1] : null;
       const res = await fetch(
-        ` https://developed-ballet-projectors-shall.trycloudflare.com/api/admin/${schoolCode}/account/${id}`,
+        ` http://localhost:4000/api/admin/${schoolCode}/account/${id}`,
         {
           method: 'DELETE',
           headers: {
