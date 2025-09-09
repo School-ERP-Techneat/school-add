@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 const DataTable = ({
   headers,
   rows,
-  schoolCode, // ✅ pass the schoolCode
+  schoolCode, // ✅ passed in as prop
   refreshData, // ✅ callback to refresh after delete
 }: {
   headers: string[];
@@ -20,10 +20,10 @@ const DataTable = ({
         toast.error('No access token found. Please log in.');
         return;
       }
-const match = document.cookie.match(/userId=([^;]+)/);
-const schoolCode = match ? match[1] : null;
+
+      // ✅ use the prop schoolCode (don’t redeclare)
       const res = await fetch(
-        ` https://api.tachneat.shop/api/admin/${schoolCode}/account/${id}`,
+        `https://api.tachneat.shop/api/admin/${schoolCode}/account/${id}`,
         {
           method: 'DELETE',
           headers: {

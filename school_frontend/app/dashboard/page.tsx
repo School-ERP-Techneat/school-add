@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image'; // ✅ Use next/image
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import InfoCard from '@/components/dashboard/InfoCard';
@@ -23,9 +24,9 @@ const DashboardPage = () => {
   } = useDashboardData();
 
   const [authChecked, setAuthChecked] = useState(false);
-   const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
-   const getSchoolCode = () =>
+  const getSchoolCode = () =>
     typeof window !== 'undefined' ? localStorage.getItem('schoolCode') : null;
 
   // 🔐 Auth check
@@ -67,7 +68,7 @@ const DashboardPage = () => {
           <header className="text-center mb-6">
             {schoolDetails ? (
               <>
-                {/* School Logo */}
+                {/* ✅ School Logo with next/image */}
                 {schoolDetails.logoUrl && (
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
@@ -75,10 +76,12 @@ const DashboardPage = () => {
                     transition={{ delay: 0.2 }}
                     className="flex justify-center mb-4"
                   >
-                    <img
+                    <Image
                       src={schoolDetails.logoUrl}
                       alt={`${schoolDetails.name} logo`}
-                      className="h-20 object-contain rounded-lg shadow-md"
+                      width={80}
+                      height={80}
+                      className="object-contain rounded-lg shadow-md"
                     />
                   </motion.div>
                 )}
@@ -93,7 +96,7 @@ const DashboardPage = () => {
               </>
             ) : (
               <span className="text-gray-500 dark:text-gray-400 animate-pulse">
-                Loading school info... 
+                Loading school info...
               </span>
             )}
             <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
@@ -106,13 +109,13 @@ const DashboardPage = () => {
 
           <div className="space-y-4">
             <motion.a
-              whileHover={{ scale: 1.05 }} 
-              href={`https://erp.tachneat.shop/?school=${userId}`} 
+              whileHover={{ scale: 1.05 }}
+              href={`https://erp.tachneat.shop/?school=${userId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center py-2 px-4 bg-gradient-to-r from-teal-500 to-indigo-500 hover:brightness-110 text-white font-semibold rounded-md shadow-lg"
             >
-              🚀 Login  ERP  
+              🚀 Login ERP
             </motion.a>
           </div>
         </motion.div>
@@ -199,8 +202,8 @@ const DashboardPage = () => {
                 <DataTable
                   headers={['Name', 'Role', 'Department', 'Actions']}
                   rows={adminData}
-                  // @ts-ignore
-                  onDelete={handleDelete}
+                  schoolCode={getSchoolCode() || ''}
+                  refreshData={() => {}} // you can pass fetchAdmins here
                 />
               </motion.div>
             ) : (
