@@ -1,11 +1,16 @@
 'use client';
-import { useState, useCallback, useEffect, startTransition } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import Header from '@/components/Header';
 import AuthToggle from '@/components/AuthToggle';
 import AuthForm from '@/components/AuthForm';
+import { Inter, Poppins } from 'next/font/google';
+
+// Load fonts
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const poppins = Poppins({ subsets: ['latin'], weight: '700', variable: '--font-poppins' });
 
 const API_BASE = 'https://api.tachneat.shop/api';
 
@@ -29,7 +34,6 @@ const LoginPage = () => {
     password: '',
   });
 
-  // Load theme preference
   useEffect(() => {
     const stored = localStorage.getItem('darkMode') === 'true';
     setDarkMode(stored);
@@ -40,7 +44,6 @@ const LoginPage = () => {
     localStorage.setItem('darkMode', String(darkMode));
   }, [darkMode]);
 
-  // 🔐 Redirect if already logged in
   useEffect(() => {
     const match = document.cookie.match(/userId=([^;]+)/);
     if (match) {
@@ -50,7 +53,6 @@ const LoginPage = () => {
     }
   }, [router]);
 
-  // Autofocus email
   useEffect(() => {
     const input = document.querySelector<HTMLInputElement>('input[name="email"]');
     input?.focus();
@@ -66,9 +68,6 @@ const LoginPage = () => {
     setError('');
   }, []);
 
-  /** ==============================
-   *  🔐 SIGNUP
-   * ============================== */
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -110,9 +109,6 @@ const LoginPage = () => {
     }
   };
 
-  /** ==============================
-   *  🔑 SIGNIN
-   * ============================== */
   const handleSigninSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -126,24 +122,20 @@ const LoginPage = () => {
       });
 
       const result = await res.json();
-  console.log(result);
+
       if (res.ok && result.data) {
         const { user, accessToken } = result.data;
         const schoolCode = user?.schoolCode;
-    
+
         if (!schoolCode || !accessToken) {
           throw new Error('Invalid login response: missing schoolCode or accessToken');
         }
 
-        // Store token & schoolCode
         localStorage.setItem('accessToken', accessToken);
         document.cookie = `userId=${schoolCode}; path=/; secure`;
 
-        // Fetch school details with token
         const schoolRes = await fetch(`${API_BASE}/school/${schoolCode}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         const schoolData = await schoolRes.json();
@@ -168,9 +160,6 @@ const LoginPage = () => {
     }
   };
 
-  /** ==============================
-   *  ⏳ LOADING STATE
-   * ============================== */
   if (!authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500 animate-pulse">
@@ -179,63 +168,68 @@ const LoginPage = () => {
     );
   }
 
-  /** ==============================
-   *  🎨 RENDER
-   * ============================== */
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-gray-900 dark:via-indigo-900 dark:to-black flex flex-col overflow-hidden relative">
-      {/* Floating background orbs */}
-      <div className="absolute -top-20 -left-20 w-72 h-72 bg-purple-400/30 dark:bg-purple-600/30 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-300/30 dark:bg-blue-600/30 rounded-full blur-3xl animate-ping"></div>
+    <div
+      className={`h-screen w-screen relative overflow-hidden dark:bg-black bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 dark:from-indigo-900 dark:via-purple-800 dark:to-black ${inter.variable}`}
+      style={{ fontFamily: 'var(--font-inter)' }}
+    >
+      <Toaster position="top-right" />
 
-      {/* Header with theme toggle */}
+      {/* Background particles */}
+      <div className="absolute w-[600px] h-[600px] bg-purple-400/30 dark:bg-purple-700/30 rounded-full top-[-150px] left-[-150px] blur-3xl animate-[spin_60s_linear_infinite]"></div>
+      <div className="absolute w-[400px] h-[400px] bg-teal-300/30 dark:bg-blue-700/30 rounded-full bottom-[-100px] right-[-100px] blur-3xl animate-pulse"></div>
+      <div className="absolute w-[200px] h-[200px] bg-pink-300/20 dark:bg-pink-600/20 rounded-full top-1/3 right-1/2 blur-xl animate-bounce"></div>
+
+      {/* Header */}
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+      <div className="flex flex-col lg:flex-row h-full items-center justify-center relative z-10 p-6">
+        {/* Auth Card */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-5xl h-full max-h-[calc(100vh-120px)]"
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7 }}
+          className="relative w-full lg:w-1/2 p-8 sm:p-12 backdrop-blur-2xl bg-white/20 dark:bg-gray-900/40 border border-white/30 dark:border-gray-700/30 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-500"
+          style={{ perspective: 1000, fontFamily: 'var(--font-poppins)' }}
         >
-          <div className="backdrop-blur-xl bg-white/60 dark:bg-gray-800/70 rounded-3xl shadow-2xl overflow-hidden h-full flex border border-white/20 dark:border-gray-700/30">
-            {/* Left: Auth Form */}
-            <div className="w-full lg:w-1/2 p-6 sm:p-10 flex flex-col justify-center overflow-y-auto">
-              <AuthToggle isSignUp={isSignUp} setIsSignUp={setIsSignUp} />
-              <AuthForm
-                isSignUp={isSignUp}
-                loading={loading}
-                error={error}
-                signinData={signinData}
-                signupData={signupData}
-                handleSigninChange={handleSigninChange}
-                handleSignupChange={handleSignupChange}
-                handleSigninSubmit={handleSigninSubmit}
-                handleSignupSubmit={handleSignupSubmit}
-              />
-            </div>
-
-            {/* Right: Futuristic Welcome Panel */}
-            <div className="hidden lg:flex w-1/2 relative overflow-hidden items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-indigo-500 to-teal-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 opacity-80"></div>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="relative z-10 p-10 text-center text-white"
-              >
-                <h2 className="text-4xl font-extrabold tracking-wide drop-shadow-lg mb-4">
-                  {isSignUp ? '🚀 Join the Future of Learning' : '⚡ Welcome Back to ConnectHub'}
-                </h2>
-                <p className="text-lg opacity-90 leading-relaxed">
-                  {isSignUp
-                    ? 'Sign up today and be part of the most vibrant school network — where learning meets community.'
-                    : 'Log in to your dashboard and explore your school’s digital hub. Stay connected. Stay ahead.'}
-                </p>
-              </motion.div>
-            </div>
-          </div>
+          <motion.div
+            className="w-full"
+            whileHover={{ rotateY: 5, rotateX: 5 }}
+            transition={{ type: 'spring', stiffness: 100 }}
+          >
+            <AuthToggle isSignUp={isSignUp} setIsSignUp={setIsSignUp} />
+            <AuthForm
+              isSignUp={isSignUp}
+              loading={loading}
+              error={error}
+              signinData={signinData}
+              signupData={signupData}
+              handleSigninChange={handleSigninChange}
+              handleSignupChange={handleSignupChange}
+              handleSigninSubmit={handleSigninSubmit}
+              handleSignupSubmit={handleSignupSubmit}
+            />
+          </motion.div>
         </motion.div>
+
+        {/* Right Panel */}
+        <div className="hidden lg:flex w-1/2 relative items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 80 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="relative p-12 text-center"
+          >
+            <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-indigo-500 to-teal-400">
+              {isSignUp ? '🚀 Unlock Premium School Tools' : '⚡ Welcome Back!'}
+            </h2>
+            <p className="text-lg md:text-xl text-gray-800 dark:text-gray-200 opacity-95 leading-relaxed">
+              {isSignUp
+                ? 'Sign up now to access exclusive features and manage your school like a pro.'
+                : 'Log in to your dashboard and experience next-level school management.'}
+            </p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
