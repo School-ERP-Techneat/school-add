@@ -8,7 +8,7 @@ import Footer from '../components/Footer';
 
 export default function RegisterAdmin() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',          // ✅ changed from username → email
     password: '',
     designation: '',
     schoolCode: '',
@@ -17,7 +17,6 @@ export default function RegisterAdmin() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  // ✅ Get schoolCode from cookie
   useEffect(() => {
     const match = document.cookie.match(/userId=([^;]+)/);
     if (match) {
@@ -37,7 +36,6 @@ export default function RegisterAdmin() {
     setResponse(null);
 
     try {
-      // ✅ Get accessToken (from localStorage or cookie)
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
         toast.error('Access token missing. Please login again.');
@@ -45,16 +43,15 @@ export default function RegisterAdmin() {
         return;
       }
 
-      // ✅ Correct API endpoint with schoolCode
-      const url = ` http://localhost:4000/api/admin/${formData.schoolCode}/register`;
+      const url = `https://api.tachneat.shop/api/admin/${formData.schoolCode}/register`;
 
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`, // ✅ include token
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData), // ✅ now contains "email"
       });
 
       const data = await res.json();
@@ -63,13 +60,12 @@ export default function RegisterAdmin() {
       if (res.ok && data.success) {
         toast.success('🎉 Admin registered successfully!');
         setFormData((prev) => ({
-          username: '',
+          email: '',
           password: '',
           designation: '',
-          schoolCode: prev.schoolCode, // preserve schoolCode
+          schoolCode: prev.schoolCode,
         }));
       } else if (data.error) {
-        // Handle validation errors array
         if (Array.isArray(data.error)) {
           data.error.forEach((err: any) => {
             toast.error(err.message);
@@ -92,15 +88,12 @@ export default function RegisterAdmin() {
     <div>
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      {/* Cool animated gradient background with floating shapes */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-12 bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-900">
-        {/* Floating Shapes */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-20 left-10 w-72 h-72 bg-purple-400/30 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-20 right-10 w-80 h-80 bg-indigo-400/20 rounded-full blur-3xl animate-bounce" />
         </div>
 
-        {/* Card */}
         <motion.div
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -115,9 +108,9 @@ export default function RegisterAdmin() {
             <InputField
               icon={<FaEnvelope />}
               type="email"
-              name="username"
+              name="email"          // ✅ updated here
               placeholder="Email address"
-              value={formData.username}
+              value={formData.email}
               onChange={handleChange}
               disabled={loading}
             />
@@ -155,7 +148,6 @@ export default function RegisterAdmin() {
             </motion.button>
           </form>
 
-          {/* Collapsible server response */}
           {response && (
             <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -177,7 +169,7 @@ export default function RegisterAdmin() {
   );
 }
 
-// ✅ Reusable input field with focus animation
+// ✅ Reusable input field
 const InputField = ({
   icon,
   ...props
