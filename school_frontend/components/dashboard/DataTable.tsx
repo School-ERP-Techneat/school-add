@@ -23,7 +23,7 @@ const DataTable = ({
 const match = document.cookie.match(/userId=([^;]+)/);
 const schoolCode = match ? match[1] : null;
       const res = await fetch(
-        ` http://localhost:4000/api/admin/${schoolCode}/account/${id}`,
+        ` https://api.tachneat.shop/api/admin/${schoolCode}/account/${id}`,
         {
           method: 'DELETE',
           headers: {
