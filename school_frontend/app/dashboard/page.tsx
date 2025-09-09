@@ -93,7 +93,7 @@ const DashboardPage = () => {
               </>
             ) : (
               <span className="text-gray-500 dark:text-gray-400 animate-pulse">
-                Loading school info...
+                Loading school info... 
               </span>
             )}
             <p className="text-gray-600 dark:text-gray-300 text-sm mt-2">
@@ -106,13 +106,13 @@ const DashboardPage = () => {
 
           <div className="space-y-4">
             <motion.a
-              whileHover={{ scale: 1.05 }}
-              href={`https://erp.tachneat.shop/?school=${userId}`}
+              whileHover={{ scale: 1.05 }} 
+              href={`https://erp.tachneat.shop/?school=${userId}`} 
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full text-center py-2 px-4 bg-gradient-to-r from-teal-500 to-indigo-500 hover:brightness-110 text-white font-semibold rounded-md shadow-lg"
             >
-              🚀 Login ERP
+              🚀 Login  ERP  
             </motion.a>
           </div>
         </motion.div>
