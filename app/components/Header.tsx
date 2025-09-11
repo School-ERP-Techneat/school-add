@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -15,10 +15,11 @@ interface User {
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null); // prevent hydration bug
   const [user, setUser] = useState<User | null>(null);
 
   const pathname = usePathname();
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   // Load theme + user on mount
   useEffect(() => {
@@ -37,9 +38,21 @@ const Header: React.FC = () => {
 
   // Apply theme changes
   useEffect(() => {
+    if (!theme) return;
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // Close avatar menu if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+        setAvatarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
 
@@ -59,6 +72,7 @@ const Header: React.FC = () => {
             alt="SchoolConnect Logo"
             width={36}
             height={36}
+            priority
           />
           <span className="text-lg font-bold text-teal-700 dark:text-white">SchoolConnect</span>
         </Link>
@@ -80,22 +94,26 @@ const Header: React.FC = () => {
           ))}
         </nav>
 
+        {/* Actions */}
         <div className="flex items-center gap-3">
           {/* Theme Toggle */}
-          <motion.button
-            onClick={toggleTheme}
-            whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-full border shadow-md"
-          >
-            {theme === 'dark' ? '🌙' : '☀️'}
-          </motion.button>
+          {theme && (
+            <motion.button
+              aria-label="Toggle Theme"
+              onClick={toggleTheme}
+              whileTap={{ rotate: 90, scale: 0.9 }}
+              className="p-2 rounded-full border shadow-md bg-white dark:bg-gray-800"
+            >
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </motion.button>
+          )}
 
-          {/* If user logged in → show avatar, else → show login button */}
+          {/* User or Login */}
           {user ? (
-            <div className="relative">
+            <div className="relative" ref={avatarRef}>
               <button
                 onClick={() => setAvatarOpen(!avatarOpen)}
-                className="w-9 h-9 rounded-full overflow-hidden shadow"
+                className="w-9 h-9 rounded-full overflow-hidden shadow focus:ring-2 focus:ring-teal-500"
               >
                 <Image
                   src={user.profileImageUrl || "/default-avatar.png"}
@@ -111,7 +129,7 @@ const Header: React.FC = () => {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
-                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 text-sm"
+                    className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 text-sm"
                   >
                     <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
                       <p className="font-semibold">{user.name}</p>
@@ -146,12 +164,42 @@ const Header: React.FC = () => {
           {/* Mobile Menu Toggle */}
           <button
             className="sm:hidden text-teal-700 dark:text-white ml-2"
+            aria-label="Toggle Menu"
             onClick={() => setMenuOpen(!menuOpen)}
           >
             ☰
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="sm:hidden bg-white dark:bg-gray-900 shadow-md"
+          >
+            <div className="px-4 py-3 space-y-2">
+              {navLinks.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md transition ${
+                    pathname === href
+                      ? 'bg-teal-100 dark:bg-gray-700 text-teal-700 dark:text-white'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
