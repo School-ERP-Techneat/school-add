@@ -1,10 +1,21 @@
-'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { logoutUser } from '@/utils/auth';
+"use client";
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { logoutUser } from "@/utils/auth";
+
+export const matchLogin = () => {
+  console.log(document.cookie)
+  const match = document.cookie.match(/userId=([^;]+)/);
+  console.log(match);
+  if (match) {
+    return true;
+  } else {
+    return false;
+  }
+};
 
 type HeaderProps = {
   darkMode: boolean;
@@ -13,7 +24,7 @@ type HeaderProps = {
 
 const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [greeting, setGreeting] = useState('');
+  const [greeting, setGreeting] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const pathname = usePathname();
   const avatarRef = useRef<HTMLDivElement>(null);
@@ -22,24 +33,26 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   useEffect(() => {
     const hour = new Date().getHours();
     const greetings = [
-      { text: 'Rise and shine ☀️', from: 5, to: 11 },
-      { text: 'Good afternoon 🌤️', from: 12, to: 17 },
-      { text: 'Evening vibes 🌇', from: 18, to: 21 },
-      { text: 'Time to unwind 🌙', from: 22, to: 4 },
+      { text: "Rise and shine ☀️", from: 5, to: 11 },
+      { text: "Good afternoon 🌤️", from: 12, to: 17 },
+      { text: "Evening vibes 🌇", from: 18, to: 21 },
+      { text: "Time to unwind 🌙", from: 22, to: 4 },
     ];
     const current = greetings.find(({ from, to }) =>
       from <= to ? hour >= from && hour <= to : hour >= from || hour <= to
     );
-    setGreeting(current?.text || 'Hello 👋');
+    setGreeting(current?.text || "Hello 👋");
   }, []);
 
   // Load theme
   useEffect(() => {
-    const stored = localStorage.getItem('theme');
+    const stored = localStorage.getItem("theme");
     if (stored) {
-      setDarkMode(stored === 'dark');
+      setDarkMode(stored === "dark");
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       setDarkMode(prefersDark);
     }
   }, [setDarkMode]);
@@ -47,11 +60,11 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   // Apply theme
   useEffect(() => {
     if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
 
@@ -63,32 +76,33 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       }
     };
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setAvatarOpen(false);
+      if (e.key === "Escape") setAvatarOpen(false);
     };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEsc);
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleEsc);
     return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleEsc);
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleEsc);
     };
   }, []);
 
   const toggleTheme = () => setDarkMode((prev) => !prev);
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/resources', label: 'Resources' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/login', label: 'Login', isButton: true },
+    { href: "/", label: "Home" },
+    { href: "/resources", label: "Resources" },
+    { href: "/contact", label: "Contact" },
+    { href: "/login", label: "Login", isButton: true },
   ];
 
   const pageTitle =
-    pathname === '/' ? 'Home' : pathname.replace('/', '').replace('-', ' ').toUpperCase();
+    pathname === "/"
+      ? "Home"
+      : pathname.replace("/", "").replace("-", " ").toUpperCase();
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/70 dark:bg-gray-900/70 shadow-md transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        
         {/* Logo + Greeting */}
         <Link href="/" className="flex items-center space-x-2 group" prefetch>
           <Image
@@ -125,24 +139,26 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
             whileTap={{ scale: 0.85, rotate: 20 }}
             className={`p-2 rounded-full border shadow-md transition-colors duration-200 ${
               darkMode
-                ? 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                ? "bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
             }`}
             aria-label="Toggle Theme"
           >
-            {darkMode ? '🌙' : '☀️'}
+            {darkMode ? "🌙" : "☀️"}
           </motion.button>
 
           {/* Avatar dropdown */}
           <div className="relative" ref={avatarRef}>
-            <button
-              onClick={() => setAvatarOpen((prev) => !prev)}
-              className="w-9 h-9 rounded-full bg-gradient-to-r from-teal-500 to-indigo-500 text-white flex items-center justify-center shadow hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-teal-400"
-              aria-haspopup="menu"
-              aria-expanded={avatarOpen}
-            >
-              👤
-            </button>
+            {matchLogin() && (
+              <button
+                onClick={() => setAvatarOpen((prev) => !prev)}
+                className="w-9 h-9 rounded-full bg-gradient-to-r from-teal-500 to-indigo-500 text-white flex items-center justify-center shadow hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-teal-400"
+                aria-haspopup="menu"
+                aria-expanded={avatarOpen}
+              >
+                👤
+              </button>
+            )}
             <AnimatePresence>
               {avatarOpen && (
                 <motion.div
@@ -189,9 +205,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 d={
-                  menuOpen
-                    ? 'M6 18L18 6M6 6l12 12'
-                    : 'M4 6h16M4 12h16M4 18h16'
+                  menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"
                 }
               />
             </motion.svg>
@@ -204,7 +218,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
         {menuOpen && (
           <motion.nav
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
             className="sm:hidden bg-white/95 dark:bg-gray-900/95 px-6 pb-4 space-y-2 rounded-b-2xl shadow-lg"
@@ -216,12 +230,12 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 prefetch
                 className={`block py-2 text-base transition-colors ${
                   pathname === href
-                    ? 'text-teal-600 font-semibold underline underline-offset-4'
-                    : 'text-gray-700 hover:text-teal-600 dark:text-gray-200 dark:hover:text-white'
+                    ? "text-teal-600 font-semibold underline underline-offset-4"
+                    : "text-gray-700 hover:text-teal-600 dark:text-gray-200 dark:hover:text-white"
                 } ${
                   isButton
-                    ? 'font-bold px-3 py-2 bg-gradient-to-r from-teal-500 to-indigo-500 text-white rounded-md shadow'
-                    : ''
+                    ? "font-bold px-3 py-2 bg-gradient-to-r from-teal-500 to-indigo-500 text-white rounded-md shadow"
+                    : ""
                 }`}
               >
                 {label}

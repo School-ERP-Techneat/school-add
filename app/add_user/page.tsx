@@ -6,7 +6,11 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '../components/Footer';
 
-export default function RegisterAdmin() {
+type RegisterAdminProps = {
+  setaddAdminUser: (value: boolean) => void;
+};
+
+export default function RegisterAdmin<addadminuser>({ setaddAdminUser }: RegisterAdminProps) {
   const [formData, setFormData] = useState({
     email: '',          // ✅ changed from username → email
     password: '',
@@ -86,9 +90,11 @@ export default function RegisterAdmin() {
 
   return (
     <div>
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
-
-      <div className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-12 bg-gradient-to-br from-purple-600 via-indigo-700 to-blue-900">
+      {/* <Header darkMode={darkMode} setDarkMode={setDarkMode} /> */}
+      <div className="relative  min-h-screen flex items-center justify-center overflow-hidden px-4 py-12 bg-black via-indigo-700 to-blue-900">
+    <button onClick={()=> {setaddAdminUser(false);console.log("clicked")}} className="absolute top-10 z-50 cursor-pointer right-10 text-4xl text-white">
+      <span className='cursor-pointer'>X</span>
+    </button>
         <div className="absolute inset-0 z-0">
           <div className="absolute top-20 left-10 w-72 h-72 bg-purple-400/30 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-20 right-10 w-80 h-80 bg-indigo-400/20 rounded-full blur-3xl animate-bounce" />
@@ -164,7 +170,7 @@ export default function RegisterAdmin() {
         </motion.div>
       </div>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

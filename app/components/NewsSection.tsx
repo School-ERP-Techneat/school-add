@@ -56,8 +56,8 @@ const NewsSection: React.FC = () => {
     <section
       className={`relative py-20 px-6 transition-colors duration-700 ${
         darkMode
-          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100"
-          : "bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800"
+          && "bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100"
+          
       }`}
     >
       <div className="max-w-7xl mx-auto">
