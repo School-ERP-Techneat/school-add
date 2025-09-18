@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 
-const API_BASE = ' https://api.tachneat.shop/api';
+const API_BASE = ' http://localhost:4000/api';
 
 /** 🔑 Small helper: adds Authorization automatically if token is present */
 const fetchWithAuth = async (url: string, token?: string | null, options: RequestInit = {}) => {

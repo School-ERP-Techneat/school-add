@@ -23,7 +23,7 @@ const DataTable = ({
 
       // ✅ use the prop schoolCode (don’t redeclare)
       const res = await fetch(
-        `https://api.tachneat.shop/api/admin/${schoolCode}/account/${id}`,
+        `http://localhost:4000/api/admin/${schoolCode}/account/${id}`,
         {
           method: 'DELETE',
           headers: {

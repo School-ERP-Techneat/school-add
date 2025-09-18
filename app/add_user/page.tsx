@@ -47,7 +47,7 @@ export default function RegisterAdmin<addadminuser>({ setaddAdminUser }: Registe
         return;
       }
 
-      const url = `https://api.tachneat.shop/api/admin/${formData.schoolCode}/register`;
+      const url = `http://localhost:4000/api/admin/${formData.schoolCode}/register`;
 
       const res = await fetch(url, {
         method: 'POST',

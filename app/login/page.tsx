@@ -12,7 +12,7 @@ import { Inter, Poppins } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: '700', variable: '--font-poppins' });
 
-const API_BASE = 'https://api.tachneat.shop/api';
+const API_BASE = 'http://localhost:4000/api';
 
 const LoginPage = () => {
   const router = useRouter();
