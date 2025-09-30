@@ -188,7 +188,7 @@ const LoginPage = () => {
       <div className="absolute w-[200px] h-[200px] bg-pink-300/20 dark:bg-pink-600/20 rounded-full top-1/3 right-1/2 blur-xl animate-bounce"></div>
 
       {/* Header */}
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Header  />
 
       <div className="flex flex-col lg:flex-row h-full items-center justify-center relative z-10 p-6">
         {/* Auth Card */}
