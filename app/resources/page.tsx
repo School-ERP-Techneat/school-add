@@ -1,20 +1,15 @@
-"use client"
-import Header from "@/components/Header";
+"use client";
 import React, { useState } from "react";
-import Footer from "../components/Footer";
-
-const page = () => {
-  const [darkMode, setDarkMode] = useState(false)
+const Page = () => {
+  const [darkMode, setDarkMode] = useState(false);
 
   return (
     <div>
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      
       <section className="py-16 px-6 md:px-12 lg:px-24">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold">
-            Resources
-          </h2>
-          <p className="text-lg  mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold">Resources</h2>
+          <p className="text-lg mb-10">
             Explore guides, articles, and tools to help you make the most out of
             our ECR platform.
           </p>
@@ -47,9 +42,9 @@ const page = () => {
           </div>
         </div>
       </section>
-      <Footer />
+      
     </div>
   );
 };
 
-export default page;
+export default Page;

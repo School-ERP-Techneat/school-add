@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import Header from '@/components/Header';
 
 const API_BASE = ' http://localhost:4000/api/school';
 
@@ -129,7 +128,7 @@ const SchoolFormPage = () => {
    * ============================== */
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-indigo-900 dark:to-black p-6">
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      
 
       <div className="max-w-5xl mx-auto bg-white/90 dark:bg-gray-800/80 rounded-2xl shadow-2xl p-10 backdrop-blur-md">
         <h1 className="text-4xl font-bold mb-8 text-center text-gray-900 dark:text-white">

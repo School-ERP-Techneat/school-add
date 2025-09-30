@@ -1,9 +1,11 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+
 import Header from "@/components/Header";
 import InfoCard from "@/components/dashboard/InfoCard";
 import SectionBlock from "@/components/dashboard/SectionBlock";
@@ -11,9 +13,9 @@ import DataTable from "@/components/dashboard/DataTable";
 import ActionButton from "@/components/dashboard/ActionButton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import Footer from "@/app/components/Footer";
+
 import { Inter, Poppins } from "next/font/google";
-import { div } from "framer-motion/client";
-import RegisterAdmin from "../add_user/page";
+import RegisterAdmin from "@/app/add_user/RegisterAdmin"; // ✅ use component, not page.tsx
 
 // Fonts
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -27,14 +29,16 @@ const DashboardPage = () => {
   const router = useRouter();
   const { userId, schoolDetails, adminData, loadingSchool, loadingAdmins } =
     useDashboardData();
+
   const [authChecked, setAuthChecked] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [isOpen, setisOpen] = useState(false);
-  const [addAdminUser, setaddAdminUser] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [addAdminUser, setAddAdminUser] = useState<boolean>(false);
 
   const getSchoolCode = () =>
     typeof window !== "undefined" ? localStorage.getItem("schoolCode") : null;
 
+  // 🔐 Auth check
   useEffect(() => {
     const match = document.cookie.match(/userId=([^;]+)/);
     if (!match) {
@@ -55,12 +59,8 @@ const DashboardPage = () => {
   return (
     <>
       {addAdminUser ? (
-        <div className="">
-          {addAdminUser && (
-            <div className="h-screen w-screen">
-              <RegisterAdmin setaddAdminUser={setaddAdminUser}/>
-            </div>
-          )}
+        <div className="h-screen w-screen">
+          <RegisterAdmin setaddAdminUser={setAddAdminUser} />
         </div>
       ) : (
         <div
@@ -157,42 +157,21 @@ const DashboardPage = () => {
                     }}
                     className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
                   >
-                    <InfoCard
-                      label="School ID"
-                      value={schoolDetails.code || "—"}
-                    />
-                    <InfoCard
-                      label="School Name"
-                      value={schoolDetails.name || "—"}
-                    />
+                    <InfoCard label="School ID" value={schoolDetails.code || "—"} />
+                    <InfoCard label="School Name" value={schoolDetails.name || "—"} />
                     <InfoCard
                       label="Affiliation No."
                       value={schoolDetails.affiliationNumber || "—"}
                     />
-                    <InfoCard
-                      label="Board"
-                      value={schoolDetails.board || "—"}
-                    />
-                    <InfoCard
-                      label="Medium"
-                      value={schoolDetails.medium || "—"}
-                    />
-                    <InfoCard
-                      label="Type"
-                      value={schoolDetails.schoolType || "—"}
-                    />
+                    <InfoCard label="Board" value={schoolDetails.board || "—"} />
+                    <InfoCard label="Medium" value={schoolDetails.medium || "—"} />
+                    <InfoCard label="Type" value={schoolDetails.schoolType || "—"} />
                     <InfoCard
                       label="Established"
                       value={schoolDetails.establishmentYear?.toString() || "—"}
                     />
-                    <InfoCard
-                      label="Phone"
-                      value={schoolDetails.contactPhone || "—"}
-                    />
-                    <InfoCard
-                      label="Email"
-                      value={schoolDetails.contactEmail || "—"}
-                    />
+                    <InfoCard label="Phone" value={schoolDetails.contactPhone || "—"} />
+                    <InfoCard label="Email" value={schoolDetails.contactEmail || "—"} />
                     {schoolDetails.website && (
                       <InfoCard
                         label="Website"
@@ -248,11 +227,8 @@ const DashboardPage = () => {
                     No admin users found for this school.
                   </p>
                 )}
-                {/* <Link href={`/add_user/?schoolCode=${getSchoolCode()}`}>
-              <ActionButton label="➕ Add Admin User" />
-            </Link> */}
 
-                <button onClick={() => setaddAdminUser(true)}>
+                <button onClick={() => setAddAdminUser(true)}>
                   <ActionButton label="➕ Add Admin User" />
                 </button>
               </SectionBlock>
@@ -273,43 +249,40 @@ const DashboardPage = () => {
               </motion.button>
             </Link>
 
-            <div className="fixed bottom-4 right-4 z-50">
-              {isOpen && (
-                // popup chat box
-                <div className="flex bg-white">
-                  <div className="w-80 h-96 rounded-lg shadow-2xl flex flex-col justify-between">
-                    <div className="flex  justify-between p-4 overflow-y-auto text-sm text-gray-700">
-                      <p>Hello! How can I help you today?</p>
-                      <button onClick={() => setisOpen(false)}>X</button>
-                    </div>
-
-                    <div className="p-3  border-t flex">
-                      <input
-                        type="text"
-                        placeholder="Type your message..."
-                        className="flex-1 border rounded px-3 py-1 text-sm focus:outline-none"
-                      />
-                      <button className="ml-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">
-                        Send
-                      </button>
-                    </div>
+            {/* Chat popup */}
+            {isOpen && (
+              <div className="fixed inset-0 bg-black/40 flex items-end justify-end z-50">
+                <div className="w-80 h-96 bg-white rounded-lg shadow-2xl flex flex-col justify-between m-4">
+                  <div className="flex justify-between p-4 overflow-y-auto text-sm text-gray-700">
+                    <p>Hello! How can I help you today?</p>
+                    <button onClick={() => setIsOpen(false)}>✖</button>
+                  </div>
+                  <div className="p-3 border-t flex">
+                    <input
+                      type="text"
+                      placeholder="Type your message..."
+                      className="flex-1 border rounded px-3 py-1 text-sm focus:outline-none"
+                    />
+                    <button className="ml-2 bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 text-sm">
+                      Send
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <button onClick={() => setisOpen(true)}>
-              <motion.button
-                whileHover={{
-                  scale: 1.15,
-                  boxShadow: "0 0 15px rgba(255,0,255,0.5)",
-                }}
-                className="p-3 rounded-full bg-gradient-to-r from-pink-500 to-red-500 shadow-lg text-white transition"
-              >
-                💬
-              </motion.button>
-            </button>
+            <motion.button
+              onClick={() => setIsOpen(true)}
+              whileHover={{
+                scale: 1.15,
+                boxShadow: "0 0 15px rgba(255,0,255,0.5)",
+              }}
+              className="p-3 rounded-full bg-gradient-to-r from-pink-500 to-red-500 shadow-lg text-white transition"
+            >
+              💬
+            </motion.button>
           </div>
+
           <Footer />
         </div>
       )}

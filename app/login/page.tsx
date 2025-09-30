@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
-import Header from '@/components/Header';
+import Header from '@/app/components/Header';
 import AuthToggle from '@/components/AuthToggle';
 import AuthForm from '@/components/AuthForm';
 import { Inter, Poppins } from 'next/font/google';
 
-// Load fonts
+// Fonts
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: '700', variable: '--font-poppins' });
 
@@ -34,6 +34,7 @@ const LoginPage = () => {
     password: '',
   });
 
+  // Dark mode persistence
   useEffect(() => {
     const stored = localStorage.getItem('darkMode') === 'true';
     setDarkMode(stored);
@@ -44,6 +45,7 @@ const LoginPage = () => {
     localStorage.setItem('darkMode', String(darkMode));
   }, [darkMode]);
 
+  // Check if already logged in
   useEffect(() => {
     const match = document.cookie.match(/userId=([^;]+)/);
     if (match) {
@@ -53,6 +55,7 @@ const LoginPage = () => {
     }
   }, [router]);
 
+  // Autofocus email input when toggling forms
   useEffect(() => {
     const input = document.querySelector<HTMLInputElement>('input[name="email"]');
     input?.focus();
@@ -68,6 +71,7 @@ const LoginPage = () => {
     setError('');
   }, []);
 
+  // Signup
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -97,8 +101,9 @@ const LoginPage = () => {
         setIsSignUp(false);
         setSignupData({ locationCode: '1234', email: '', password: '', confirmPassword: '' });
       } else {
-        setError(result.message || 'Signup failed');
-        toast.error(result.message || 'Signup failed');
+        const msg = result.message || 'Signup failed';
+        setError(msg);
+        toast.error(msg);
       }
     } catch (err) {
       console.error('Signup error:', err);
@@ -109,6 +114,7 @@ const LoginPage = () => {
     }
   };
 
+  // Signin
   const handleSigninSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -132,7 +138,8 @@ const LoginPage = () => {
         }
 
         localStorage.setItem('accessToken', accessToken);
-        document.cookie = `userId=${schoolCode}; path=/; secure`;
+        // For local dev, remove `secure`
+        document.cookie = `userId=${schoolCode}; path=/;`;
 
         const schoolRes = await fetch(`${API_BASE}/school/${schoolCode}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -148,8 +155,9 @@ const LoginPage = () => {
           startTransition(() => router.push('/school'));
         }
       } else {
-        setError(result.message || 'Login failed');
-        toast.error(result.message || 'Login failed');
+        const msg = result.message || 'Login failed';
+        setError(msg);
+        toast.error(msg);
       }
     } catch (err) {
       console.error('Signin error:', err);
@@ -171,7 +179,6 @@ const LoginPage = () => {
   return (
     <div
       className={`h-screen w-screen relative overflow-hidden dark:bg-black bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 dark:from-indigo-900 dark:via-purple-800 dark:to-black ${inter.variable}`}
-      style={{ fontFamily: 'var(--font-inter)' }}
     >
       <Toaster position="top-right" />
 
@@ -189,8 +196,8 @@ const LoginPage = () => {
           initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.7 }}
-          className="relative w-full lg:w-1/2 p-8 sm:p-12 backdrop-blur-2xl bg-white/20 dark:bg-gray-900/40 border border-white/30 dark:border-gray-700/30 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-500"
-          style={{ perspective: 1000, fontFamily: 'var(--font-poppins)' }}
+          className={`relative w-full lg:w-1/2 p-8 sm:p-12 backdrop-blur-2xl bg-white/20 dark:bg-gray-900/40 border border-white/30 dark:border-gray-700/30 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-500 ${poppins.variable}`}
+          style={{ perspective: 1000 }}
         >
           <motion.div
             className="w-full"
