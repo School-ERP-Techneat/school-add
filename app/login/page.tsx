@@ -12,7 +12,7 @@ import { Inter, Poppins } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: '700', variable: '--font-poppins' });
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = `${process.env.url}api`;
 
 const LoginPage = () => {
   const router = useRouter();
@@ -87,6 +87,7 @@ const LoginPage = () => {
       const res = await fetch(`${API_BASE}/school-owner/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           locationCode: signupData.locationCode,
           email: signupData.email,

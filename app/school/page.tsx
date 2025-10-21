@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-const API_BASE = ' http://localhost:4000/api/school';
+const API_BASE = `${process.env.url}api/school`;
 
 const SchoolFormPage = () => {
   const router = useRouter();
