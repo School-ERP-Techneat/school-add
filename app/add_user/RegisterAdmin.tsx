@@ -57,7 +57,7 @@ export default function RegisterAdmin({ setaddAdminUser }: RegisterAdminProps) {
         return;
       }
 
-      const url = `${process.env.url}api/admin/${formData.schoolCode}/register`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/${formData.schoolCode}/register`;
 
       const res = await fetch(url, {
         method: 'POST',

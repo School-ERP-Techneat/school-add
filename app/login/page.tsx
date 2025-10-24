@@ -12,8 +12,8 @@ import { Inter, Poppins } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: '700', variable: '--font-poppins' });
 
-const API_BASE = `${process.env.url}api`;
-
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/api`;
+console.log('API_BASE:', API_BASE);
 const LoginPage = () => {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);

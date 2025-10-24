@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 
-const API_BASE = `${process.env.url}api`;
+const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
 /** 🔑 Small helper: adds Authorization automatically if token is present */
 const fetchWithAuth = async (url: string, token?: string | null, options: RequestInit = {}) => {

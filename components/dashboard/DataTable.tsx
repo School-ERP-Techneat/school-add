@@ -23,7 +23,7 @@ const DataTable = ({
 
       // ✅ use the prop schoolCode (don’t redeclare)
       const res = await fetch(
-        `${process.env.url}api/admin/${schoolCode}/account/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}api/admin/${schoolCode}/account/${id}`,
         {
           method: 'DELETE',
           headers: {
